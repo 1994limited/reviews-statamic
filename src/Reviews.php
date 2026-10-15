@@ -387,7 +387,9 @@ class Reviews
         try {
             $invalidator = app(Invalidator::class);
 
-            foreach ($item->descendants()->prepend($item, $item->locale())->unique(fn ($e) => $e->id()) as $localised) {
+            // A new collection: descendants() is cached by Statamic, and
+            // adding to it would make the entry its own descendant.
+            foreach (collect([$item])->merge($item->descendants()->values())->unique(fn ($e) => $e->id()) as $localised) {
                 $invalidator->invalidate($localised);
             }
         } catch (Throwable $e) {

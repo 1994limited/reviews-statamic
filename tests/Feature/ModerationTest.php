@@ -17,6 +17,7 @@ use NineteenNinetyFour\Reviews\Notifications\ReviewReplied as RepliedEmail;
 use NineteenNinetyFour\Reviews\ReviewStatus;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use Statamic\Facades\Entry;
 use Statamic\StaticCaching\Invalidator;
 
 class ModerationTest extends TestCase
@@ -122,6 +123,22 @@ class ModerationTest extends TestCase
         $this->reviews()->approve($review);
 
         $this->assertSame(['book'], $invalidated);
+    }
+
+    #[Test]
+    public function an_entry_can_be_saved_after_its_reviews_change(): void
+    {
+        $review = $this->review(['status' => ReviewStatus::Pending]);
+        $this->reviews()->approve($review);
+
+        $entry = Entry::find('book');
+
+        // Statamic saves an entry's descendants with it: the entry mustn't be one.
+        $this->assertSame([], $entry->descendants()->map->id()->values()->all());
+        $this->assertSame([], $entry->directDescendants()->map->id()->values()->all());
+
+        $entry->set('title', 'The Long Field, revised')->saveQuietly();
+        $this->assertSame('The Long Field, revised', Entry::find('book')->get('title'));
     }
 
     #[Test]
