@@ -329,6 +329,9 @@ class Review implements ContainsQueryableValues
     {
         return match ($field) {
             'id' => $this->id,
+            // The Stache's path index, which it compares with the files on
+            // disk to notice reviews added, changed or deleted by hand.
+            'path' => $this->path(),
             'entry' => $this->entry,
             'site' => $this->site,
             'status' => $this->status->value,
