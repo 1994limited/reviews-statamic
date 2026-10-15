@@ -2,7 +2,7 @@
 
 Collect reviews and star ratings on your own site: a review form for any entry, moderation in the Control Panel, and averages, reviews and review schema in your templates.
 
-![A bookshop's book page, with the book's average rating from nine reviews](docs/images/product.png)
+![Reviews for Statamic: write it, check it, show it. A bookshop's book page with its star rating](docs/marketplace/cover-1600x900.png)
 
 Other review addons copy reviews in from Google, Yotpo or Trustpilot. Reviews collects them on your site, from your visitors and customers, and keeps them in **flat files** or **your database**. With [Cargo](https://builtwithcargo.dev), reviews by customers who bought the product are marked as **verified purchases**.
 
