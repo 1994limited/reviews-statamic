@@ -1,0 +1,27 @@
+{{ reviews sort="newest" paginate="10" as="items" }}
+    {{ items }}
+        <article id="review-{{ id }}">
+            <p aria-label="{{ rating }} out of 5">{{ stars }}{{ if full }}★{{ else }}☆{{ /if }}{{ /stars }}</p>
+            {{ if title }}<h3>{{ title }}</h3>{{ /if }}
+            <p>{{ body }}</p>
+            <p>
+                {{ name }}, {{ date format="j F Y" }}
+                {{ if verified }}· Verified purchase{{ /if }}
+            </p>
+            {{ if photos }}
+                {{ photos }}<img src="{{ url }}" alt="{{ alt }}" width="160">{{ /photos }}
+            {{ /if }}
+            {{ if has_reply }}
+                <blockquote><strong>Our reply:</strong> {{ reply }}</blockquote>
+            {{ /if }}
+            {{ reviews:helpful }}<button>Helpful ({{ helpful }})</button>{{ /reviews:helpful }}
+        </article>
+    {{ /items }}
+
+    {{ if no_results }}<p>Be the first to review this.</p>{{ /if }}
+
+    {{ paginate }}
+        {{ if prev_page }}<a href="{{ prev_page }}">Newer</a>{{ /if }}
+        {{ if next_page }}<a href="{{ next_page }}">Older</a>{{ /if }}
+    {{ /paginate }}
+{{ /reviews }}

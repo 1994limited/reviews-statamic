@@ -76,9 +76,10 @@ class Presenter
             // For a bar or the width of filled stars: 4.5 out of 5 is 90.
             'percent' => $average !== null ? round($average / 5 * 100, 1) : 0,
             'stars' => static::stars($average ?? 0),
+            // "total", not "count": Antlers loops have a count of their own.
             'breakdown' => collect([5, 4, 3, 2, 1])->map(fn ($rating) => [
                 'rating' => $rating,
-                'count' => $summary->stars[$rating] ?? 0,
+                'total' => $summary->stars[$rating] ?? 0,
                 'percent' => $count > 0 ? (int) round(($summary->stars[$rating] ?? 0) / $count * 100) : 0,
             ])->all(),
             'criteria' => collect($criteria)->map(function ($criterion) use ($summary) {

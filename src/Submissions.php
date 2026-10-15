@@ -57,6 +57,10 @@ class Submissions
      */
     public static function sessionOrders(Request $request): array
     {
+        if (! $request->hasSession()) {
+            return [];
+        }
+
         return array_values(array_filter((array) $request->session()->get(self::ORDERS, []), 'is_string'));
     }
 

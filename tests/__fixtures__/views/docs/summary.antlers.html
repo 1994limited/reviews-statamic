@@ -1,0 +1,15 @@
+{{ reviews:summary }}
+    {{ if has_reviews }}
+        <p>
+            <span aria-hidden="true">{{ stars }}{{ if full }}★{{ elseif half }}⯪{{ else }}☆{{ /if }}{{ /stars }}</span>
+            {{ average }} out of 5, from {{ count }} {{ count == 1 ? 'review' : 'reviews' }}
+        </p>
+        <ul>
+            {{ breakdown }}
+                <li>{{ rating }} stars: {{ total }} ({{ percent }}%)</li>
+            {{ /breakdown }}
+        </ul>
+    {{ else }}
+        <p>No reviews yet.</p>
+    {{ /if }}
+{{ /reviews:summary }}

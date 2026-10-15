@@ -1,0 +1,43 @@
+{{ reviews:form redirect="#review" }}
+    {{ if success }}<p role="status">{{ success }}</p>{{ /if }}
+    {{ if reason }}
+        <p>{{ reason_message }}</p>
+    {{ else }}
+        {{ if has_errors }}
+            <ul role="alert">{{ error_list }}<li>{{ value }}</li>{{ /error_list }}</ul>
+        {{ /if }}
+
+        <fieldset>
+            <legend>Your rating</legend>
+            {{ loop from="5" to="1" }}
+                <label>
+                    <input type="radio" name="rating" value="{{ value }}" required {{ if old:rating == value }}checked{{ /if }}>
+                    {{ value }} {{ value == 1 ? 'star' : 'stars' }}
+                </label>
+            {{ /loop }}
+        </fieldset>
+
+        {{ criteria }}
+            <label>{{ label }}
+                <select name="{{ name }}">
+                    <option value="">–</option>
+                    {{ loop from="5" to="1" }}<option value="{{ value }}" {{ if old == value }}selected{{ /if }}>{{ value }}</option>{{ /loop }}
+                </select>
+            </label>
+        {{ /criteria }}
+
+        <label>Title <input name="title" value="{{ old:title }}" maxlength="{{ title_limit }}"></label>
+        <label>Your review <textarea name="body" maxlength="{{ body_limit }}" required>{{ old:body }}</textarea></label>
+
+        {{ if needs_name }}
+            <label>Your name <input name="name" value="{{ old:name }}" required></label>
+            <label>Your email (not shown) <input type="email" name="email" value="{{ old:email }}" required></label>
+        {{ /if }}
+
+        {{ if photos_enabled }}
+            <label>Photos (up to {{ max_photos }}) <input type="file" name="photos[]" accept="image/jpeg,image/png,image/webp" multiple></label>
+        {{ /if }}
+
+        <button type="submit">{{ editing ? 'Update your review' : 'Send your review' }}</button>
+    {{ /if }}
+{{ /reviews:form }}

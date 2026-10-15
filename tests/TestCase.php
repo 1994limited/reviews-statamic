@@ -40,6 +40,8 @@ abstract class TestCase extends AddonTestCase
         $app['config']->set('view.paths', [__DIR__.'/__fixtures__/views']);
         // No waiting in tests: the time trap is tested on its own.
         $app['config']->set('reviews.spam.minimum_seconds', 0);
+        // Rate limits are tested on their own.
+        $app['config']->set('reviews.throttle.submit', 1000);
     }
 
     protected function setUp(): void

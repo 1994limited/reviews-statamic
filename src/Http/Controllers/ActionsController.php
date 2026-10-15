@@ -112,7 +112,7 @@ class ActionsController
         $found = $cargo->order($order);
         $entry = $this->reviews->entry($product);
 
-        if (! $found || ! $entry || ! in_array($this->reviews->entryId($entry), $cargo->products($found), true)) {
+        if (! $found || ! $this->reviews->reviewable($entry) || ! in_array($this->reviews->entryId($entry), $cargo->products($found), true)) {
             abort(404);
         }
 
