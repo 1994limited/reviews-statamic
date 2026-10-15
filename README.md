@@ -30,7 +30,7 @@ The screenshots are from Dog-ear Books, a made-up bookshop built only with the t
 
 ## Requirements
 
-- Statamic 6, PHP 8.3 or later.
+- Statamic 6.35 or later, PHP 8.3 or later.
 - Statamic Pro for signed-in reviewers and Control Panel permissions. Guests can review without it.
 - Optional: Cargo 1.15 or later, for verified purchases.
 

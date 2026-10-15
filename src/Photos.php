@@ -25,6 +25,9 @@ class Photos
 {
     public const TYPES = ['jpg', 'jpeg', 'png', 'webp'];
 
+    /** The most pixels a photo may have before it's decoded. */
+    public const MAX_PIXELS = 40_000_000;
+
     public function enabled(): bool
     {
         return Settings::bool('photos_enabled') && extension_loaded('gd');
@@ -75,6 +78,14 @@ class Photos
     public function reencode(string|false $path): ?string
     {
         if (! $path || ! is_file($path)) {
+            return null;
+        }
+
+        // A small file can unpack into an enormous image ("decompression
+        // bomb"): refuse anything over 40 megapixels before decoding it.
+        $size = @getimagesize($path);
+
+        if (! is_array($size) || $size[0] < 1 || $size[1] < 1 || $size[0] * $size[1] > self::MAX_PIXELS) {
             return null;
         }
 

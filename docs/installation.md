@@ -3,7 +3,7 @@
 ## Requirements
 
 - PHP 8.3 or later, with GD if reviewers can add photos.
-- Statamic 6. Statamic Pro for signed-in reviewers and Control Panel permissions.
+- Statamic 6.35 or later. Statamic Pro for signed-in reviewers and Control Panel permissions.
 - Optional: [Cargo](https://builtwithcargo.dev) 1.15 or later (before 2.0), for verified purchases.
 
 ## Installing

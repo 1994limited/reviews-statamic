@@ -4,6 +4,7 @@ namespace NineteenNinetyFour\Reviews\Tests\Feature;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use NineteenNinetyFour\Reviews\Photos;
 use NineteenNinetyFour\Reviews\ReviewQuery;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -116,6 +117,24 @@ class PhotosTest extends TestCase
 
         $this->assertSame([], Storage::disk('assets')->allFiles('reviews'));
         $this->assertSame([], Storage::disk('local')->allFiles('reviews/pending'));
+    }
+
+    #[Test]
+    public function enormous_images_are_never_decoded(): void
+    {
+        // A PNG that says it's 10,000 × 10,000 pixels, in a few hundred bytes.
+        $image = imagecreatetruecolor(1, 1);
+        ob_start();
+        imagepng($image);
+        $png = ob_get_clean();
+        $png = substr_replace($png, pack('NN', 10000, 10000), 16, 8);
+
+        $path = tempnam(sys_get_temp_dir(), 'rv').'.png';
+        file_put_contents($path, $png);
+
+        $this->assertNull(app(Photos::class)->reencode($path));
+
+        unlink($path);
     }
 
     #[Test]

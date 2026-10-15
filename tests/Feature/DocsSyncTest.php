@@ -42,7 +42,7 @@ class DocsSyncTest extends TestCase
 
             $this->assertSame(
                 substr_count($markdown, '```antlers'),
-                substr_count($markdown, "<summary>Blade</summary>"),
+                substr_count($markdown, '<summary>Blade</summary>'),
                 basename($file).' has an Antlers example without a Blade version.'
             );
         }

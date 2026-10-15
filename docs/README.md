@@ -32,6 +32,6 @@ Reviews collects reviews and star ratings on your own site. Visitors write them 
 ## Requirements
 
 - PHP 8.3 or later, with the GD extension for photos.
-- Statamic 6. Front-end user accounts and Control Panel permissions need Statamic Pro; guests can review without it.
+- Statamic 6.35 or later. Front-end user accounts and Control Panel permissions need Statamic Pro; guests can review without it.
 - For the database driver: any database Laravel supports.
 - For the Cargo features: Cargo 1.15 or later (before 2.0).

@@ -26,4 +26,5 @@ The first release.
 - **Everything a reviewer wrote is escaped** in templates, the Control Panel and emails, and can't break out of review schema.
 - **No IP addresses are kept.** Votes and opt-outs are kept as hashes.
 - **Redirects stay on your site.**
+- **Photos are size-checked before they’re opened**, so a small file can’t unpack into an image that exhausts memory.
 - **Fair reviews**: nothing publishes or hides reviews by their rating, and editors can't change a reviewer's words.
