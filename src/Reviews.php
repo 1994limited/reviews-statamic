@@ -244,7 +244,7 @@ class Reviews
         app(Photos::class)->publish($review);
 
         $review->status = ReviewStatus::Approved;
-        $review->approvedAt = CarbonImmutable::now();
+        $review->approvedAt = CarbonImmutable::now()->startOfSecond();
         $this->save($review);
 
         ReviewApproved::dispatch($review);
@@ -297,7 +297,7 @@ class Reviews
 
         $review->reply = $reply;
         $review->replyBy = $reply !== null ? ($by ? (string) $by->id() : $review->replyBy) : null;
-        $review->repliedAt = $reply !== null ? ($replied ? CarbonImmutable::now() : $review->repliedAt) : null;
+        $review->repliedAt = $reply !== null ? ($replied ? CarbonImmutable::now()->startOfSecond() : $review->repliedAt) : null;
 
         $this->save($review);
 

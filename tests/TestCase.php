@@ -62,6 +62,9 @@ abstract class TestCase extends AddonTestCase
     protected function tearDown(): void
     {
         @unlink(__DIR__.'/__fixtures__/dev-null/reviews-requests.json');
+        // Addon settings saved in a test.
+        @unlink(resource_path('addons/reviews-statamic.yaml'));
+        Settings::flush();
 
         parent::tearDown();
     }

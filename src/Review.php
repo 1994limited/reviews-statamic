@@ -243,7 +243,7 @@ class Review implements ContainsQueryableValues
      */
     public function touch(): static
     {
-        $now = CarbonImmutable::now();
+        $now = CarbonImmutable::now()->startOfSecond();
         $this->createdAt ??= $now;
         $this->updatedAt = $now;
 
