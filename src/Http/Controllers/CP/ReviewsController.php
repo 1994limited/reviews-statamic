@@ -5,6 +5,7 @@ namespace NineteenNinetyFour\Reviews\Http\Controllers\CP;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 use NineteenNinetyFour\Reviews\Photos;
@@ -86,7 +87,7 @@ class ReviewsController extends CpController
                 'email' => $review->email,
                 'user' => $reviewer ? ['name' => $reviewer->name() ?: $reviewer->email(), 'url' => $reviewer->editUrl()] : null,
                 'order' => $review->order,
-                'order_url' => $review->order && \Illuminate\Support\Facades\Route::has('statamic.cp.cargo.orders.edit') ? cp_route('cargo.orders.edit', $review->order) : null,
+                'order_url' => $review->order && Route::has('statamic.cp.cargo.orders.edit') ? cp_route('cargo.orders.edit', $review->order) : null,
                 'body' => $review->body,
                 'ratings' => collect($this->reviews->criteria($entry))
                     ->filter(fn ($c) => isset($review->ratings[$c['handle']]))

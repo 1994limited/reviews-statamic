@@ -12,6 +12,7 @@ use NineteenNinetyFour\Reviews\Notifications\ReviewRequest;
 use NineteenNinetyFour\Reviews\Reviews;
 use NineteenNinetyFour\Reviews\Settings;
 use Statamic\Console\RunsInPlease;
+use Statamic\Contracts\Auth\User;
 use Statamic\Facades\Site;
 use Throwable;
 
@@ -108,7 +109,7 @@ class SendRequests extends Command
 
         try {
             $customerObject = $order->customer();
-            $user = $customerObject instanceof \Statamic\Contracts\Auth\User ? $customerObject : null;
+            $user = $customerObject instanceof User ? $customerObject : null;
         } catch (Throwable) {
         }
 

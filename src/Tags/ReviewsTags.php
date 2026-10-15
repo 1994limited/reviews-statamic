@@ -12,6 +12,7 @@ use NineteenNinetyFour\Reviews\Reviews;
 use NineteenNinetyFour\Reviews\Schema;
 use NineteenNinetyFour\Reviews\Spam;
 use NineteenNinetyFour\Reviews\Submissions;
+use NineteenNinetyFour\Reviews\Summary;
 use Statamic\Contracts\Entries\Entry;
 use Statamic\Facades\Site;
 use Statamic\Facades\User;
@@ -84,7 +85,7 @@ class ReviewsTags extends Tags
         $entry = $this->entry();
 
         if (! $entry) {
-            return app(Presenter::class)->summary(\NineteenNinetyFour\Reviews\Summary::from([]));
+            return app(Presenter::class)->summary(Summary::from([]));
         }
 
         $summary = $this->reviews()->summary($this->reviews()->entryId($entry), $this->siteParam());
@@ -168,7 +169,7 @@ class ReviewsTags extends Tags
             'title_limit' => (int) config('reviews.form.title_limit', 120),
             'body_limit' => (int) config('reviews.form.body_limit', 5000),
             'name_limit' => (int) config('reviews.form.name_limit', 60),
-            'turnstile' => $spam->turnstileWidget(),
+            'captcha' => $spam->captchaWidget(),
         ];
 
         $attrs = $photos->enabled() ? ['enctype' => 'multipart/form-data'] : [];
@@ -179,9 +180,9 @@ class ReviewsTags extends Tags
 
         $content = $this->isPair ? (string) $this->parse($data) : '';
 
-        // The Turnstile widget, if the template didn't place it.
-        if ($data['turnstile'] !== '' && ! str_contains($content, 'cf-turnstile')) {
-            $content .= $data['turnstile'];
+        // The captcha, at the end of the form if the template didn't place it.
+        if ($data['captcha'] !== '' && ! str_contains($content, 'data-reviews-captcha')) {
+            $content .= $data['captcha'];
         }
 
         return $html.$content.$this->formClose().$spam->script();

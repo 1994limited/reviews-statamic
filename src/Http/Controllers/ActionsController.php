@@ -46,8 +46,8 @@ class ActionsController
             return $this->success($request, __('reviews::messages.thanks_pending'));
         }
 
-        if (! $this->spam->passesTurnstile($request)) {
-            return $this->failure($request, ['turnstile' => __('reviews::messages.turnstile')]);
+        if (! $this->spam->passesCaptcha($request)) {
+            return $this->failure($request, ['captcha' => __('reviews::messages.captcha')]);
         }
 
         try {
@@ -198,6 +198,6 @@ class ActionsController
 
         return $this->back($request, $request->filled('_error_redirect') ? '_error_redirect' : '_redirect')
             ->withErrors($errors, 'reviews')
-            ->withInput($request->except(['photos', $this->spam->honeypot(), Spam::TIME_FIELD, Spam::OPENED_FIELD, 'cf-turnstile-response', '_token']));
+            ->withInput($request->except(['photos', $this->spam->honeypot(), Spam::TIME_FIELD, Spam::OPENED_FIELD, '_token', ...$this->spam->captchaFields()]));
     }
 }

@@ -29,7 +29,7 @@ return [
 
     'choose_rating' => 'Choose a rating from 1 to 5 stars.',
     'too_many_links' => 'Your review has too many links in it.',
-    'turnstile' => 'Please confirm you’re not a robot, then send your review again.',
+    'captcha' => 'Please confirm you’re not a robot, then send your review again.',
     'already_reviewed' => 'You’ve already reviewed this.',
     'not_yours' => 'That isn’t your review.',
     'not_found' => 'That review can’t be found.',

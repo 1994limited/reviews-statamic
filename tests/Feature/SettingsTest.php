@@ -2,11 +2,11 @@
 
 namespace NineteenNinetyFour\Reviews\Tests\Feature;
 
-use NineteenNinetyFour\Reviews\ReviewStatus;
 use NineteenNinetyFour\Reviews\Settings;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades\Addon;
+use Statamic\Facades\Entry;
 
 class SettingsTest extends TestCase
 {
@@ -64,7 +64,7 @@ class SettingsTest extends TestCase
             ['label' => 'Recipes only', 'handle' => 'taste', 'collections' => ['recipes']],
         ]]);
 
-        $criteria = $this->reviews()->criteria(\Statamic\Facades\Entry::find('book'));
+        $criteria = $this->reviews()->criteria(Entry::find('book'));
 
         $this->assertSame([['handle' => 'story', 'label' => 'Story']], $criteria);
     }

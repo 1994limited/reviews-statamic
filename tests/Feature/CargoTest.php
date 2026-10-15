@@ -3,6 +3,7 @@
 namespace NineteenNinetyFour\Reviews\Tests\Feature;
 
 use DuncanMcClean\Cargo\Facades\Order;
+use DuncanMcClean\Cargo\Orders\OrderStatus;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Notification;
 use NineteenNinetyFour\Reviews\Contracts\RequestLog;
@@ -14,6 +15,7 @@ use NineteenNinetyFour\Reviews\ReviewStatus;
 use NineteenNinetyFour\Reviews\Tests\CargoTestCase;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\Attributes\Test;
+use Statamic\Facades\Entry;
 
 #[RunTestsInSeparateProcesses]
 class CargoTest extends CargoTestCase
@@ -100,7 +102,7 @@ class CargoTest extends CargoTestCase
         $this->actingAs($user)->post('/!/reviews/submit', $this->submission())->assertSessionHasNoErrors();
 
         // Pages that aren't products are open to anyone.
-        \Statamic\Facades\Entry::make()->collection('pages')->id('about')->slug('about')->data(['title' => 'About'])->save();
+        Entry::make()->collection('pages')->id('about')->slug('about')->data(['title' => 'About'])->save();
         $this->post('/!/reviews/submit', $this->submission(['entry' => 'about', 'email' => 'x@example.com']))->assertSessionHasNoErrors();
     }
 
@@ -277,7 +279,7 @@ class CargoTest extends CargoTestCase
         $this->artisan('reviews:send-requests');
         Notification::assertNothingSent();
 
-        $order->status(\DuncanMcClean\Cargo\Orders\OrderStatus::Shipped)->saveQuietly();
+        $order->status(OrderStatus::Shipped)->saveQuietly();
 
         $this->artisan('reviews:send-requests');
         Notification::assertSentOnDemandTimes(ReviewRequest::class, 1);

@@ -5,7 +5,6 @@ namespace NineteenNinetyFour\Reviews\Tests\Feature;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use NineteenNinetyFour\Reviews\ReviewQuery;
-use NineteenNinetyFour\Reviews\ReviewStatus;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades\Asset;

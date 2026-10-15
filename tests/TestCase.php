@@ -2,14 +2,15 @@
 
 namespace NineteenNinetyFour\Reviews\Tests;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use NineteenNinetyFour\Reviews\Review;
 use NineteenNinetyFour\Reviews\Reviews;
 use NineteenNinetyFour\Reviews\ReviewStatus;
 use NineteenNinetyFour\Reviews\ServiceProvider;
 use NineteenNinetyFour\Reviews\Settings;
 use NineteenNinetyFour\Reviews\Spam;
-use Illuminate\Support\Facades\Crypt;
 use Statamic\Facades\Antlers;
 use Statamic\Facades\Collection;
 use Statamic\Facades\Entry;
@@ -148,7 +149,7 @@ abstract class TestCase extends AddonTestCase
         $review->photos = $data['photos'] ?? [];
 
         if (isset($data['created_at'])) {
-            $review->createdAt = \Carbon\CarbonImmutable::parse($data['created_at']);
+            $review->createdAt = CarbonImmutable::parse($data['created_at']);
         }
 
         if ($review->status === ReviewStatus::Approved) {

@@ -2,9 +2,10 @@
 
 namespace NineteenNinetyFour\Reviews\Tests\Feature;
 
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Notifications\AnonymousNotifiable;
 use NineteenNinetyFour\Reviews\Events\ReviewApproved;
 use NineteenNinetyFour\Reviews\Events\ReviewDeleted;
 use NineteenNinetyFour\Reviews\Events\ReviewRejected;
@@ -214,7 +215,7 @@ class ModerationTest extends TestCase
     #[Test]
     public function emails_are_queued(): void
     {
-        $this->assertContains(\Illuminate\Contracts\Queue\ShouldQueue::class, class_implements(ReviewNotification::class));
+        $this->assertContains(ShouldQueue::class, class_implements(ReviewNotification::class));
     }
 
     #[Test]

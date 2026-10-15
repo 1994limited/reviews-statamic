@@ -12,6 +12,9 @@ use NineteenNinetyFour\Reviews\ReviewStatus;
 use NineteenNinetyFour\Reviews\Spam;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use Statamic\Facades\Collection;
+use Statamic\Facades\Entry;
+use Statamic\Facades\Site;
 
 class SubmitTest extends TestCase
 {
@@ -173,7 +176,7 @@ class SubmitTest extends TestCase
         $this->product('draft', 'Draft', published: false);
         $this->event('future', 'Next year', now()->addYear()->toDateString());
         $this->unrouted('snippet', 'Snippet');
-        \Statamic\Facades\Entry::make()->collection('pages')->id('about')->slug('about')->data(['title' => 'About'])->save();
+        Entry::make()->collection('pages')->id('about')->slug('about')->data(['title' => 'About'])->save();
 
         foreach (['draft', 'future', 'snippet', 'missing', '../etc'] as $i => $id) {
             $response = $this->post('/!/reviews/submit', $this->submission(['entry' => $id, 'email' => "u{$i}@example.com"]));
@@ -192,13 +195,13 @@ class SubmitTest extends TestCase
     public function reviews_of_a_translation_are_kept_against_the_original(): void
     {
         config(['statamic.system.multisite' => true]);
-        \Statamic\Facades\Site::setSites([
+        Site::setSites([
             'default' => ['name' => 'English', 'url' => '/', 'locale' => 'en_GB'],
             'french' => ['name' => 'French', 'url' => '/fr/', 'locale' => 'fr_FR'],
         ])->save();
-        \Statamic\Facades\Collection::find('products')->sites(['default', 'french'])->routes('/products/{slug}')->save();
+        Collection::find('products')->sites(['default', 'french'])->routes('/products/{slug}')->save();
 
-        $original = \Statamic\Facades\Entry::find('book');
+        $original = Entry::find('book');
         $french = $original->makeLocalization('french')->id('livre')->slug('le-long-champ');
         $french->save();
 

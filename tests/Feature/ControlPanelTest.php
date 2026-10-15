@@ -5,7 +5,11 @@ namespace NineteenNinetyFour\Reviews\Tests\Feature;
 use Inertia\Testing\AssertableInertia;
 use NineteenNinetyFour\Reviews\ReviewStatus;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
+use NineteenNinetyFour\Reviews\Widgets\PendingReviews;
 use PHPUnit\Framework\Attributes\Test;
+use Statamic\Facades\Entry;
+use Statamic\Facades\Permission;
+use Statamic\Fields\Field;
 
 class ControlPanelTest extends TestCase
 {
@@ -183,7 +187,7 @@ class ControlPanelTest extends TestCase
         $this->actingAs($this->editor())->get(cp_route('reviews.index'))->assertOk();
 
         foreach (['view reviews', 'moderate reviews', 'reply to reviews', 'delete reviews'] as $permission) {
-            $this->assertNotNull(\Statamic\Facades\Permission::get($permission), "No [{$permission}] permission.");
+            $this->assertNotNull(Permission::get($permission), "No [{$permission}] permission.");
         }
     }
 
@@ -193,14 +197,14 @@ class ControlPanelTest extends TestCase
         $this->review(['status' => ReviewStatus::Pending, 'title' => 'Waiting']);
 
         $this->actingAs($this->editor());
-        $widget = (new \NineteenNinetyFour\Reviews\Widgets\PendingReviews)->component()->toArray();
+        $widget = (new PendingReviews)->component()->toArray();
 
         $this->assertSame('reviews-pending-widget', $widget['name']);
         $this->assertSame(1, $widget['props']['total']);
         $this->assertSame('Waiting', $widget['props']['reviews'][0]['title']);
 
         $this->actingAs($this->user('nobody@example.com', ['access cp']));
-        $this->assertNull((new \NineteenNinetyFour\Reviews\Widgets\PendingReviews)->component());
+        $this->assertNull((new PendingReviews)->component());
     }
 
     #[Test]
@@ -209,8 +213,8 @@ class ControlPanelTest extends TestCase
         $this->review(['rating' => 4]);
         $this->review(['rating' => 2, 'status' => ReviewStatus::Pending]);
 
-        $field = new \Statamic\Fields\Field('reviews', ['type' => 'reviews']);
-        $field->setParent(\Statamic\Facades\Entry::find('book'));
+        $field = new Field('reviews', ['type' => 'reviews']);
+        $field->setParent(Entry::find('book'));
 
         $preload = $field->fieldtype()->preload();
 

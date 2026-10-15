@@ -5,8 +5,12 @@ namespace NineteenNinetyFour\Reviews;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Http;
-use Throwable;
+use InvalidArgumentException;
+use NineteenNinetyFour\Reviews\Captcha\HCaptcha;
+use NineteenNinetyFour\Reviews\Captcha\Recaptcha;
+use NineteenNinetyFour\Reviews\Captcha\RecaptchaV3;
+use NineteenNinetyFour\Reviews\Captcha\Turnstile;
+use NineteenNinetyFour\Reviews\Contracts\Captcha;
 
 /**
  * Telling people from bots, without asking people to do anything:
@@ -16,7 +20,8 @@ use Throwable;
  *   bot's. The form carries the time it was drawn, encrypted. A page
  *   served from the static cache was drawn long ago, so the form's small
  *   script also notes when the page was opened in the browser;
- * - Cloudflare Turnstile, when its keys are set.
+ * - a captcha, when one is set up: Cloudflare Turnstile, hCaptcha,
+ *   Google reCAPTCHA (v2 or v3), or your own.
  */
 class Spam
 {
@@ -91,50 +96,66 @@ class Spam
 
     /*
     |--------------------------------------------------------------------------
-    | Cloudflare Turnstile
+    | Captchas
     |--------------------------------------------------------------------------
     */
 
-    public function turnstileEnabled(): bool
+    /** The drivers that come with the addon. */
+    public const CAPTCHAS = [
+        'turnstile' => Turnstile::class,
+        'hcaptcha' => HCaptcha::class,
+        'recaptcha' => Recaptcha::class,
+        'recaptcha_v3' => RecaptchaV3::class,
+    ];
+
+    /**
+     * The captcha the form uses, or null for none.
+     */
+    public function captcha(): ?Captcha
     {
-        return filled(config('reviews.spam.turnstile.site_key')) && filled(config('reviews.spam.turnstile.secret_key'));
+        $config = (array) config('reviews.spam.captcha', []);
+        $driver = $config['driver'] ?? null;
+
+        if (! is_string($driver) || $driver === '') {
+            return null;
+        }
+
+        $class = self::CAPTCHAS[$driver] ?? $driver;
+
+        if (! class_exists($class) || ! is_subclass_of($class, Captcha::class)) {
+            throw new InvalidArgumentException("Unknown reviews captcha [{$driver}]. Use turnstile, hcaptcha, recaptcha, recaptcha_v3, or a class implementing ".Captcha::class.'.');
+        }
+
+        // The addon's own drivers need both keys; without them, there's no captcha.
+        if (isset(self::CAPTCHAS[$driver]) && (! filled($config['site_key'] ?? null) || ! filled($config['secret_key'] ?? null))) {
+            return null;
+        }
+
+        return app()->makeWith($class, [
+            'siteKey' => (string) ($config['site_key'] ?? ''),
+            'secretKey' => (string) ($config['secret_key'] ?? ''),
+            'config' => $config,
+        ]);
     }
 
-    public function turnstileWidget(): string
+    public function captchaWidget(): string
     {
-        if (! $this->turnstileEnabled()) {
-            return '';
-        }
-
-        return '<div class="cf-turnstile" data-sitekey="'.e((string) config('reviews.spam.turnstile.site_key')).'"></div>'
-            .'<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>';
+        return $this->captcha()?->widget() ?? '';
     }
 
-    public function passesTurnstile(Request $request): bool
+    public function passesCaptcha(Request $request): bool
     {
-        if (! $this->turnstileEnabled()) {
-            return true;
-        }
+        return $this->captcha()?->verify($request) ?? true;
+    }
 
-        $token = $request->input('cf-turnstile-response');
-
-        if (! is_string($token) || $token === '' || strlen($token) > 4096) {
-            return false;
-        }
-
-        try {
-            $response = Http::asForm()->timeout(10)->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-                'secret' => config('reviews.spam.turnstile.secret_key'),
-                'response' => $token,
-                'remoteip' => $request->ip(),
-            ]);
-
-            return $response->successful() && $response->json('success') === true;
-        } catch (Throwable $e) {
-            report($e);
-
-            return false;
-        }
+    /**
+     * The captcha's own form fields, kept out of old input.
+     *
+     * @return array<int, string>
+     */
+    public function captchaFields(): array
+    {
+        return $this->captcha()?->fields() ?? [];
     }
 
     /**

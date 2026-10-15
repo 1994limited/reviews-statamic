@@ -156,10 +156,17 @@ return [
         // are a bot's.
         'minimum_seconds' => 3,
 
-        // Cloudflare Turnstile, when both keys are set.
-        'turnstile' => [
-            'site_key' => env('REVIEWS_TURNSTILE_SITE_KEY'),
-            'secret_key' => env('REVIEWS_TURNSTILE_SECRET_KEY'),
+        // A captcha on the form: "turnstile" (Cloudflare), "hcaptcha",
+        // "recaptcha" (Google's v2 checkbox), "recaptcha_v3" (scored, with
+        // nothing to tick), or the class of your own (implementing
+        // NineteenNinetyFour\Reviews\Contracts\Captcha). Off when null,
+        // or until both keys are set. Captchas need JavaScript.
+        'captcha' => [
+            'driver' => env('REVIEWS_CAPTCHA'),
+            'site_key' => env('REVIEWS_CAPTCHA_SITE_KEY'),
+            'secret_key' => env('REVIEWS_CAPTCHA_SECRET_KEY'),
+            // reCAPTCHA v3 only: the lowest score taken as a person.
+            'score' => 0.5,
         ],
     ],
 

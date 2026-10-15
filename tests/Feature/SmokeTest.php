@@ -2,6 +2,7 @@
 
 namespace NineteenNinetyFour\Reviews\Tests\Feature;
 
+use NineteenNinetyFour\Reviews\ReviewQuery;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -14,6 +15,6 @@ class SmokeTest extends TestCase
 
         $this->post('/!/reviews/submit', $this->submission())->assertRedirect()->assertSessionHasNoErrors();
 
-        $this->assertSame(1, $this->reviews()->repository()->count(\NineteenNinetyFour\Reviews\ReviewQuery::make()));
+        $this->assertSame(1, $this->reviews()->repository()->count(ReviewQuery::make()));
     }
 }

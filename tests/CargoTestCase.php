@@ -6,6 +6,7 @@ use DuncanMcClean\Cargo\Contracts\Orders\Order as OrderContract;
 use DuncanMcClean\Cargo\Discounts\DiscountServiceProvider;
 use DuncanMcClean\Cargo\Facades\Cart;
 use DuncanMcClean\Cargo\Facades\PaymentGateway;
+use DuncanMcClean\Cargo\Facades\TaxClass;
 use DuncanMcClean\Cargo\Orders\Actions\CreateOrderFromCart;
 use DuncanMcClean\Cargo\Orders\OrderServiceProvider;
 use DuncanMcClean\Cargo\Payments\PaymentServiceProvider;
@@ -111,7 +112,7 @@ YAML);
 
         if ($variants) {
             // Cargo looks up a variant's tax class on its product.
-            \DuncanMcClean\Cargo\Facades\TaxClass::make()->handle('books')->set('title', 'Books')->save();
+            TaxClass::make()->handle('books')->set('title', 'Books')->save();
             $data['tax_class'] = 'books';
             unset($data['price']);
             $data['product_variants'] = [

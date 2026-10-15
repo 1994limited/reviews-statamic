@@ -4,6 +4,7 @@ namespace NineteenNinetyFour\Reviews\Tests\Feature;
 
 use Illuminate\Filesystem\Filesystem;
 use NineteenNinetyFour\Reviews\ReviewQuery;
+use NineteenNinetyFour\Reviews\Stache\ReviewsStore;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades\Stache;
@@ -60,7 +61,7 @@ class FileDriverTest extends TestCase
         $this->reviews()->repository()->count(ReviewQuery::make());
 
         // As a new request would: nothing in memory, only the cache.
-        $store = app(\NineteenNinetyFour\Reviews\Stache\ReviewsStore::class)->directory($this->directory);
+        $store = app(ReviewsStore::class)->directory($this->directory);
         Stache::registerStore($store);
 
         $this->assertSame('Kept', $this->reviews()->repository()->find($review->id)?->title);
