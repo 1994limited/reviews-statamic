@@ -1,0 +1,209 @@
+tabs:
+  reviews:
+    display: Reviews
+    sections:
+      -
+        display: 'What can be reviewed'
+        fields:
+          -
+            handle: collections
+            field:
+              type: collections
+              display: Collections
+              instructions: 'Entries in these collections take reviews. Leave empty for every collection with pages.'
+              mode: select
+          -
+            handle: who
+            field:
+              type: button_group
+              display: 'Who can write reviews'
+              options:
+                anyone: 'Anyone (guests give a name and email)'
+                users: 'Signed-in users only'
+              default: anyone
+          -
+            handle: buyers_only
+            field:
+              type: toggle
+              display: 'Only buyers can review products'
+              instructions: 'With Cargo: only customers who bought a product can review it.'
+      -
+        display: 'The form'
+        fields:
+          -
+            handle: require_title
+            field:
+              type: toggle
+              display: 'A title is required'
+              default: false
+              width: 50
+          -
+            handle: require_body
+            field:
+              type: toggle
+              display: 'Text is required'
+              instructions: 'Off, a star rating on its own is enough.'
+              default: true
+              width: 50
+          -
+            handle: criteria
+            field:
+              type: grid
+              display: Criteria
+              instructions: 'Ratings out of five for particular things, such as Quality and Value, as well as the overall rating. Optional for reviewers.'
+              mode: table
+              add_row: 'Add criterion'
+              fields:
+                -
+                  handle: label
+                  field:
+                    type: text
+                    display: Label
+                    validate:
+                      - required
+                -
+                  handle: handle
+                  field:
+                    type: slug
+                    display: Handle
+                    from: label
+                    separator: _
+                    validate:
+                      - required
+                      - 'regex:/^[a-z][a-z0-9_]*$/'
+                -
+                  handle: collections
+                  field:
+                    type: collections
+                    display: 'Only for'
+                    mode: select
+          -
+            handle: name_display
+            field:
+              type: button_group
+              display: 'Show reviewers’ names as'
+              options:
+                short: 'First name and initial (Jo B.)'
+                full: 'Full name'
+              default: short
+  moderation:
+    display: Moderation
+    sections:
+      -
+        display: Moderation
+        instructions: 'Reviews are never published or held back because of their star rating: that would mislead customers (and breaks consumer law in the UK, EU and US).'
+        fields:
+          -
+            handle: auto_approve
+            field:
+              type: select
+              display: 'Publish without checking'
+              options:
+                never: 'Never: an editor approves every review'
+                users: 'Reviews by signed-in users'
+                verified: 'Reviews by verified buyers (with Cargo)'
+              default: never
+          -
+            handle: notify_to
+            field:
+              type: list
+              display: 'Email new reviews to'
+              instructions: 'Email addresses told about each new review.'
+          -
+            handle: notify_approved
+            field:
+              type: toggle
+              display: 'Tell reviewers when their review is approved'
+              default: false
+              width: 50
+          -
+            handle: notify_replied
+            field:
+              type: toggle
+              display: 'Tell reviewers when you reply'
+              default: true
+              width: 50
+  photos:
+    display: Photos
+    sections:
+      -
+        display: Photos
+        instructions: 'Reviewers can add photos. They’re kept privately until the review is approved, then saved to the asset container, re-saved as JPEGs without the camera’s location.'
+        fields:
+          -
+            handle: photos_enabled
+            field:
+              type: toggle
+              display: 'Allow photos'
+              default: false
+          -
+            handle: photos_max
+            field:
+              type: integer
+              display: 'Photos per review'
+              default: 4
+              width: 50
+              if:
+                photos_enabled: true
+          -
+            handle: photos_container
+            field:
+              type: asset_container
+              display: 'Asset container'
+              instructions: 'Where approved photos are saved, in a "reviews" folder.'
+              max_items: 1
+              mode: select
+              width: 50
+              if:
+                photos_enabled: true
+  cargo:
+    display: Cargo
+    sections:
+      -
+        display: 'Review requests'
+        instructions: 'With Cargo: an email asking customers to review what they bought, sent once per order. Customers can stop them with a link in the email.'
+        fields:
+          -
+            handle: requests_enabled
+            field:
+              type: toggle
+              display: 'Send review requests'
+              default: false
+          -
+            handle: requests_delay_days
+            field:
+              type: integer
+              display: 'Days after the order'
+              default: 14
+              width: 50
+              if:
+                requests_enabled: true
+          -
+            handle: requests_status
+            field:
+              type: select
+              display: 'Once the order is'
+              options:
+                payment_received: Paid
+                shipped: Shipped
+                delivered: Delivered
+              default: payment_received
+              width: 50
+              if:
+                requests_enabled: true
+          -
+            handle: request_subject
+            field:
+              type: text
+              display: Subject
+              placeholder: 'How was your order from :site?'
+              if:
+                requests_enabled: true
+          -
+            handle: request_intro
+            field:
+              type: textarea
+              display: Message
+              placeholder: 'Thanks for your order. We’d love to know what you think of it: it takes a minute, and helps other customers choose.'
+              if:
+                requests_enabled: true
