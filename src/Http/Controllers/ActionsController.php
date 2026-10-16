@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use NineteenNinetyFour\Reviews\Contracts\RequestLog;
+use NineteenNinetyFour\Reviews\DuplicateReview;
 use NineteenNinetyFour\Reviews\Http\ReadsText;
 use NineteenNinetyFour\Reviews\Integrations\Cargo;
 use NineteenNinetyFour\Reviews\Presenter;
@@ -55,6 +56,8 @@ class ActionsController
             $review = $this->submissions->submit($request, User::current());
         } catch (ValidationException $e) {
             return $this->failure($request, $e->errors());
+        } catch (DuplicateReview) {
+            return $this->success($request, __('reviews::messages.thanks_pending'));
         } catch (ReviewException $e) {
             return $this->failure($request, ['review' => $e->getMessage()]);
         }

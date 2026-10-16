@@ -157,6 +157,24 @@ trait RepositoryContract
     }
 
     #[Test]
+    public function saving_a_review_loaded_before_a_vote_keeps_the_vote(): void
+    {
+        $review = $this->review();
+        $stale = $this->repository()->find($review->id);
+
+        $this->repository()->vote($review, 'voter-a');
+
+        // An editor replies, with the review as it was before the vote.
+        $stale->reply = 'Thanks!';
+        $this->repository()->save($stale);
+
+        $found = $this->repository()->find($review->id);
+        $this->assertSame('Thanks!', $found->reply);
+        $this->assertSame(1, $found->helpful);
+        $this->assertFalse($this->repository()->vote($found, 'voter-a'));
+    }
+
+    #[Test]
     public function all_includes_voters(): void
     {
         $review = $this->review();

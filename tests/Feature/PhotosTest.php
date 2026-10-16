@@ -4,8 +4,12 @@ namespace NineteenNinetyFour\Reviews\Tests\Feature;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use NineteenNinetyFour\Reviews\Contracts\ReviewRepository;
 use NineteenNinetyFour\Reviews\Photos;
+use NineteenNinetyFour\Reviews\Review;
 use NineteenNinetyFour\Reviews\ReviewQuery;
+use NineteenNinetyFour\Reviews\Reviews;
+use NineteenNinetyFour\Reviews\Stache\StacheReviewRepository;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades\Asset;
@@ -101,6 +105,42 @@ class PhotosTest extends TestCase
         $review = $this->reviews()->find($review->id);
         $this->assertArrayHasKey('disk', $review->photos[0]);
         Storage::disk('local')->assertExists($review->photos[0]['path']);
+        $this->assertSame([], Storage::disk('assets')->allFiles('reviews'));
+    }
+
+    #[Test]
+    public function a_review_that_cant_be_approved_keeps_its_photos_where_they_were(): void
+    {
+        $this->post('/!/reviews/submit', $this->submission(['photos' => [UploadedFile::fake()->image('a.jpg')]]));
+        $review = $this->submitted();
+        $pending = $review->photos[0]['path'];
+
+        // Storage fails as the approved review is saved.
+        $real = app(ReviewRepository::class);
+        $this->app->instance(ReviewRepository::class, new class($real) extends StacheReviewRepository
+        {
+            public function __construct(private $real) {}
+
+            public function save(Review $review): void
+            {
+                throw new \RuntimeException('Disk full');
+            }
+
+            public function find(string $id): ?Review
+            {
+                return $this->real->find($id);
+            }
+        });
+        $this->app->forgetInstance(Reviews::class);
+
+        try {
+            $this->reviews()->approve($review);
+            $this->fail('The save should have failed.');
+        } catch (\RuntimeException) {
+        }
+
+        // The private photo is still there, and nothing was left public.
+        Storage::disk('local')->assertExists($pending);
         $this->assertSame([], Storage::disk('assets')->allFiles('reviews'));
     }
 

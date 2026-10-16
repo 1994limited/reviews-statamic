@@ -144,28 +144,25 @@ class Reviews
      */
     public function summary(string $entry, ?string $site = null): Summary
     {
-        $key = $this->summaryKey($entry);
-        $part = $site ?? '*';
+        // Each entry's numbers live under a version that goes up when its
+        // reviews change. A request still working out the old numbers can
+        // only write them under the old version, which nothing reads again.
+        $key = 'reviews:summary:'.sha1($entry).':'.$this->summaryVersion($entry).':'.($site ?? '*');
 
-        $cached = Cache::get($key);
-        $cached = is_array($cached) ? $cached : [];
-
-        if (! isset($cached[$part]) || ! is_array($cached[$part])) {
-            $cached[$part] = $this->repository->tally($entry, $site);
-            Cache::forever($key, $cached);
-        }
-
-        return Summary::from($cached[$part]);
+        return Summary::from(Cache::rememberForever($key, fn () => $this->repository->tally($entry, $site)));
     }
 
     public function forgetSummary(string $entry): void
     {
-        Cache::forget($this->summaryKey($entry));
+        $key = 'reviews:summary-version:'.sha1($entry);
+
+        Cache::add($key, 0);
+        Cache::increment($key);
     }
 
-    protected function summaryKey(string $entry): string
+    protected function summaryVersion(string $entry): int
     {
-        return 'reviews:summary:'.sha1($entry);
+        return (int) Cache::get('reviews:summary-version:'.sha1($entry), 0);
     }
 
     /*
@@ -241,11 +238,21 @@ class Reviews
             return;
         }
 
-        app(Photos::class)->publish($review);
+        $photos = app(Photos::class);
+        $done = $photos->publish($review);
 
         $review->status = ReviewStatus::Approved;
         $review->approvedAt = CarbonImmutable::now()->startOfSecond();
-        $this->save($review);
+
+        try {
+            $this->save($review);
+        } catch (Throwable $e) {
+            $photos->undo($done);
+
+            throw $e;
+        }
+
+        $photos->finish($done);
 
         ReviewApproved::dispatch($review);
     }
@@ -254,7 +261,8 @@ class Reviews
     {
         $status = $status === ReviewStatus::Spam ? ReviewStatus::Spam : ReviewStatus::Rejected;
 
-        app(Photos::class)->unpublish($review);
+        $photos = app(Photos::class);
+        $done = $photos->unpublish($review);
 
         $review->status = $status;
         $review->approvedAt = null;
@@ -263,9 +271,28 @@ class Reviews
             $review->note = trim($note) === '' ? null : trim($note);
         }
 
-        $this->save($review);
+        $this->saveMoving($review, $photos, $done);
 
         ReviewRejected::dispatch($review);
+    }
+
+    /**
+     * Save a review whose photos are being moved: the old copies are only
+     * removed once it's saved, and the new ones if it can't be.
+     *
+     * @param  array{created: array<int, array<string, string>>, remove: array<int, array<string, string>>}  $done
+     */
+    protected function saveMoving(Review $review, Photos $photos, array $done): void
+    {
+        try {
+            $this->save($review);
+        } catch (Throwable $e) {
+            $photos->undo($done);
+
+            throw $e;
+        }
+
+        $photos->finish($done);
     }
 
     public function spam(Review $review): void
@@ -278,11 +305,13 @@ class Reviews
      */
     public function hold(Review $review): void
     {
-        app(Photos::class)->unpublish($review);
+        $photos = app(Photos::class);
+        $done = $photos->unpublish($review);
 
         $review->status = ReviewStatus::Pending;
         $review->approvedAt = null;
-        $this->save($review);
+
+        $this->saveMoving($review, $photos, $done);
     }
 
     /**

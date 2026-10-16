@@ -231,10 +231,12 @@ The tag adds what the form needs (the entry, CSRF, the spam checks) around your 
 | `ratings[handle]` | Each criterion, 1 to 5, optional. `{{ criteria }}` gives each one's `name`. |
 | `title` | Optional unless the settings require it. |
 | `body` | The review. Required unless the settings say a rating alone is enough. |
-| `name`, `email` | Guests only (`needs_name`). Signed-in reviewers use their account. |
+| `name`, `email` | Guests only (`needs_name`). Signed-in reviewers are shown by their account's name; a `name` sent for them is ignored. |
 | `photos[]` | When photos are on ([Photos](photos.md)). |
 
 When a visitor can't review, `reason` says why: `sign_in`, `buyers_only` (Cargo), or `unavailable` (the entry doesn't take reviews), and `reason_message` says it in words. A signed-in reviewer who has reviewed the entry gets their review back in the form (`editing`), to change it; a changed review goes back to an editor unless it'd be published straight away.
+
+Each person reviews an entry once. A guest who sends a second review from the same email address is thanked as for a first one, and nothing is kept: the form never says whether an address has reviewed something, so it can't be used to find out.
 
 `redirect` sends them somewhere else afterwards (only within your site); `error_redirect` sends errors somewhere else.
 
@@ -242,7 +244,7 @@ When a visitor can't review, `reason` says why: `sign_in`, `buyers_only` (Cargo)
 
 ## "Was this helpful?"
 
-Inside the list, `{{ reviews:helpful }}` is a form with a button; `{{ helpful }}` is the count. One vote per person: their account, or a cookie for guests. It works without JavaScript.
+Inside the list, `{{ reviews:helpful }}` is a form with a button; `{{ helpful }}` is the count. One vote per person: by their account when signed in, or for guests by a cookie, which is as far as it goes without an account (a guest who clears their cookies can vote again, within the rate limit). It works without JavaScript.
 
 ```antlers
 {{ reviews:helpful }}<button>Helpful ({{ helpful }})</button>{{ /reviews:helpful }}

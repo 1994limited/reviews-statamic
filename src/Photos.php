@@ -108,23 +108,25 @@ class Photos
     }
 
     /**
-     * Move waiting photos into the asset container.
+     * Copy waiting photos into the asset container, and point the review at
+     * the copies. The private files stay until finish() is called once the
+     * review is saved; undo() removes the copies if it can't be. A photo
+     * that can't be copied stays waiting, as it was.
+     *
+     * @return array{created: array<int, array<string, string>>, remove: array<int, array<string, string>>}
      */
-    public function publish(Review $review): void
+    public function publish(Review $review): array
     {
-        if (! $review->hasPendingPhotos()) {
-            return;
-        }
-
-        $container = $this->container();
+        $done = ['created' => [], 'remove' => []];
+        $container = $review->hasPendingPhotos() ? $this->container() : null;
 
         if (! $container) {
-            return;
+            return $done;
         }
 
         $folder = trim((string) config('reviews.photos.folder', 'reviews'), '/');
 
-        $review->photos = collect($review->photos)->map(function (array $photo, int $i) use ($container, $folder, $review) {
+        $review->photos = collect($review->photos)->map(function (array $photo, int $i) use ($container, $folder, $review, &$done) {
             if (! isset($photo['disk'])) {
                 return $photo;
             }
@@ -133,7 +135,7 @@ class Photos
                 $contents = Storage::disk($photo['disk'])->get($photo['path']);
 
                 if ($contents === null) {
-                    return null;
+                    return $photo;
                 }
 
                 $path = ltrim($folder.'/'.$review->id.'-'.($i + 1).'-'.Str::lower(Str::random(6)).'.jpg', '/');
@@ -143,7 +145,8 @@ class Photos
                 $asset->set('alt', __('reviews::messages.photo_alt', ['name' => Reviews::displayName($review->name)]));
                 $asset->save();
 
-                Storage::disk($photo['disk'])->delete($photo['path']);
+                $done['created'][] = ['asset' => $asset->id()];
+                $done['remove'][] = $photo;
 
                 return ['asset' => $asset->id()];
             } catch (Throwable $e) {
@@ -151,18 +154,25 @@ class Photos
 
                 return $photo;
             }
-        })->filter()->values()->all();
+        })->values()->all();
+
+        return $done;
     }
 
     /**
-     * Take published photos back off the site, to the private disk.
+     * Copy published photos back to the private disk, off the site, and
+     * point the review at the copies. The assets are deleted by finish(),
+     * once the review is saved.
+     *
+     * @return array{created: array<int, array<string, string>>, remove: array<int, array<string, string>>}
      */
-    public function unpublish(Review $review): void
+    public function unpublish(Review $review): array
     {
+        $done = ['created' => [], 'remove' => []];
         $disk = $this->pendingDisk();
         $directory = trim((string) config('reviews.photos.pending_directory', 'reviews/pending'), '/');
 
-        $review->photos = collect($review->photos)->map(function (array $photo) use ($disk, $directory, $review) {
+        $review->photos = collect($review->photos)->map(function (array $photo) use ($disk, $directory, $review, &$done) {
             if (! isset($photo['asset'])) {
                 return $photo;
             }
@@ -176,15 +186,59 @@ class Photos
             try {
                 $path = $directory.'/'.$review->id.'/'.Str::lower(Str::random(16)).'.jpg';
                 Storage::disk($disk)->put($path, $asset->contents());
-                $asset->delete();
 
-                return ['disk' => $disk, 'path' => $path];
+                $copy = ['disk' => $disk, 'path' => $path];
+                $done['created'][] = $copy;
+                $done['remove'][] = $photo;
+
+                return $copy;
             } catch (Throwable $e) {
                 report($e);
 
                 return $photo;
             }
         })->filter()->values()->all();
+
+        return $done;
+    }
+
+    /**
+     * The review was saved: remove the old copies of moved photos.
+     *
+     * @param  array{created: array<int, array<string, string>>, remove: array<int, array<string, string>>}  $done
+     */
+    public function finish(array $done): void
+    {
+        $this->deleteFiles($done['remove']);
+    }
+
+    /**
+     * The review couldn't be saved: remove the new copies, leaving the photos
+     * where the saved review still says they are.
+     *
+     * @param  array{created: array<int, array<string, string>>, remove: array<int, array<string, string>>}  $done
+     */
+    public function undo(array $done): void
+    {
+        $this->deleteFiles($done['created']);
+    }
+
+    /**
+     * @param  array<int, array<string, string>>  $photos
+     */
+    protected function deleteFiles(array $photos): void
+    {
+        foreach ($photos as $photo) {
+            try {
+                if (isset($photo['asset'])) {
+                    Asset::find($photo['asset'])?->delete();
+                } elseif (isset($photo['disk'], $photo['path'])) {
+                    Storage::disk($photo['disk'])->delete($photo['path']);
+                }
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
     }
 
     /**
@@ -192,17 +246,7 @@ class Photos
      */
     public function delete(Review $review): void
     {
-        foreach ($review->photos as $photo) {
-            try {
-                if (isset($photo['asset'])) {
-                    Asset::find($photo['asset'])?->delete();
-                } else {
-                    Storage::disk($photo['disk'])->delete($photo['path']);
-                }
-            } catch (Throwable $e) {
-                report($e);
-            }
-        }
+        $this->deleteFiles($review->photos);
 
         $review->photos = [];
     }

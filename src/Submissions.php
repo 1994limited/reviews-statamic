@@ -4,6 +4,7 @@ namespace NineteenNinetyFour\Reviews;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use NineteenNinetyFour\Reviews\Events\ReviewSubmitted;
@@ -78,14 +79,34 @@ class Submissions
         }
 
         $entryId = $this->reviews->entryId($entry);
-        $existing = $this->reviews->existing($entryId, $user, $user ? null : $this->input($request, 'email', 254));
 
-        if ($existing && ! $user) {
-            throw new ReviewException(__('reviews::messages.already_reviewed'));
-        }
-
+        // What they sent is checked before anything about earlier reviews,
+        // so the answer can't tell anyone whether an address has reviewed
+        // the entry before.
+        $existing = $user ? $this->reviews->existing($entryId, $user) : null;
         $data = $this->validate($request, $entry, $user, $existing);
 
+        // One review per person per entry, even when two arrive at once.
+        $identity = $user ? 'user:'.$user->id() : 'email:'.mb_strtolower((string) $data['email']);
+
+        return Cache::lock('reviews:submit:'.sha1($entryId.'|'.$identity), 10)->block(5, function () use ($user, $entryId, $orders, $data) {
+            $existing = $this->reviews->existing($entryId, $user, $user ? null : $data['email']);
+
+            if ($existing && ! $user) {
+                // Thanked as a new review would be, and nothing kept.
+                throw new DuplicateReview;
+            }
+
+            return $this->store($existing, $user, $entryId, $orders, $data);
+        });
+    }
+
+    /**
+     * @param  array<int, string>  $orders
+     * @param  array<string, mixed>  $data
+     */
+    protected function store(?Review $existing, ?User $user, string $entryId, array $orders, array $data): Review
+    {
         $review = $existing ?? Review::make();
         $review->entry = $entryId;
         $review->site ??= Site::current()->handle();
@@ -230,7 +251,9 @@ class Submissions
             }
         }
 
-        $name = $input['name'] ?? ($user ? $this->userName($user) : '');
+        // Signed-in reviewers are shown by their account's name, whatever a
+        // form sends.
+        $name = $user ? $this->userName($user) : (string) $input['name'];
 
         return [
             'rating' => (int) $input['rating'],

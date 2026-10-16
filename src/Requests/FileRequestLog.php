@@ -56,7 +56,22 @@ class FileRequestLog implements RequestLog
             return ['sent' => [], 'opted_out' => []];
         }
 
-        $data = json_decode((string) file_get_contents($path), true);
+        // Shared lock: wait while update() is rewriting the file, rather than
+        // read it half written and send a request twice, or to someone who
+        // opted out.
+        $handle = fopen($path, 'r');
+
+        if ($handle === false) {
+            return ['sent' => [], 'opted_out' => []];
+        }
+
+        try {
+            flock($handle, LOCK_SH);
+            $data = json_decode((string) stream_get_contents($handle), true);
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
 
         return is_array($data) ? $data + ['sent' => [], 'opted_out' => []] : ['sent' => [], 'opted_out' => []];
     }

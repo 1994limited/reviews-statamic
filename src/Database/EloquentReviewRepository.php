@@ -25,11 +25,27 @@ class EloquentReviewRepository implements ReviewRepository
     public function save(Review $review): void
     {
         $this->connection()->transaction(function () use ($review) {
-            ReviewModel::query()->updateOrCreate(['id' => $review->id], $this->attributes($review));
+            $attributes = $this->attributes($review);
+            $model = ReviewModel::query()->lockForUpdate()->find($review->id);
+
+            if ($model) {
+                // The helpful count is the votes' own: a review loaded before
+                // someone voted mustn't put the old count back.
+                unset($attributes['helpful']);
+                $model->fill($attributes)->save();
+            } else {
+                ReviewModel::query()->create(['id' => $review->id] + $attributes);
+            }
 
             // Voters come along when a review is copied from the file driver.
-            foreach ($review->voters as $voter) {
-                VoteModel::query()->firstOrCreate(['review_id' => $review->id, 'voter' => $voter], ['created_at' => now()]);
+            if ($review->voters !== []) {
+                foreach ($review->voters as $voter) {
+                    VoteModel::query()->firstOrCreate(['review_id' => $review->id, 'voter' => $voter], ['created_at' => now()]);
+                }
+
+                ReviewModel::query()->whereKey($review->id)->update([
+                    'helpful' => VoteModel::query()->where('review_id', $review->id)->count(),
+                ]);
             }
         });
     }

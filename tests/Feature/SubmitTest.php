@@ -231,12 +231,35 @@ class SubmitTest extends TestCase
     #[Test]
     public function a_guest_can_review_an_entry_once_per_email_address(): void
     {
-        $this->post('/!/reviews/submit', $this->submission())->assertSessionHasNoErrors();
+        $first = $this->post('/!/reviews/submit', $this->submission());
+        $again = $this->post('/!/reviews/submit', $this->submission(['email' => 'SAM@example.com', 'body' => 'Again']));
 
-        $this->post('/!/reviews/submit', $this->submission(['email' => 'SAM@example.com', 'body' => 'Again']))
-            ->assertSessionHasErrors(['review' => 'You’ve already reviewed this.'], null, 'reviews');
+        // The same answer as a first review, so nobody can find out from the
+        // form whether an address has reviewed something.
+        $again->assertSessionHasNoErrors()->assertSessionHas('reviews_success', 'Thank you. Your review will appear once we’ve checked it.');
+        $this->assertSame($first->getStatusCode(), $again->getStatusCode());
 
         $this->assertSame(1, $this->total());
+        $this->assertSame('I enjoyed this a lot.', $this->only()->body);
+    }
+
+    #[Test]
+    public function mistakes_are_reported_the_same_whether_or_not_the_address_has_reviewed(): void
+    {
+        $this->post('/!/reviews/submit', $this->submission());
+
+        $this->post('/!/reviews/submit', $this->submission(['rating' => '']))->assertSessionHasErrors('rating', null, 'reviews');
+        $this->post('/!/reviews/submit', $this->submission(['rating' => '', 'email' => 'new@example.com']))->assertSessionHasErrors('rating', null, 'reviews');
+    }
+
+    #[Test]
+    public function signed_in_reviewers_are_shown_by_their_accounts_name_whatever_the_form_sends(): void
+    {
+        $this->actingAs($this->user('sam@example.com', name: 'Sam Reader'))
+            ->post('/!/reviews/submit', $this->submission(['name' => 'The Shop Owner']))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('Sam Reader', $this->only()->name);
     }
 
     #[Test]

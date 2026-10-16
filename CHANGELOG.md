@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.1 (unreleased)
+
+### Fixed
+- **"Helpful" counts can't go backwards.** Saving a review that was loaded before someone voted (a reply, say) no longer puts the old count back, with either driver. The file driver now changes one review at a time, re-reading it from disk, so two requests can't overwrite each other's votes.
+- **Averages can't stick at an old value.** A page working out an entry's numbers as one of its reviews changed could cache the old numbers for good; each change now starts afresh.
+- **Photos move safely on approval.** They're copied, the review is saved, and only then are the old copies removed, so a failed save can't leave a photo public or lost.
+- **Signed-in reviewers are shown by their account's name**, whatever a form sends, as the docs say.
+- **The file driver's review-request log** is read with a lock, so a request is never sent twice, or to someone who opted out, while the log is being written.
+
+### Safety
+- **The form no longer reveals who has reviewed what.** A guest's second review of an entry from the same email address is thanked as a first would be (and not kept), instead of saying they've already reviewed it. Two arriving at once can't both be kept.
+
+### Docs
+- Guest "helpful" votes are by cookie: one per person as far as that goes without an account.
+
 ## 1.1.0 (2026-10-16)
 
 ### Added

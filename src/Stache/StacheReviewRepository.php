@@ -4,6 +4,7 @@ namespace NineteenNinetyFour\Reviews\Stache;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\LazyCollection;
 use NineteenNinetyFour\Reviews\Contracts\ReviewRepository;
 use NineteenNinetyFour\Reviews\Review;
@@ -29,7 +30,16 @@ class StacheReviewRepository implements ReviewRepository
 
     public function save(Review $review): void
     {
-        $this->store()->save($review);
+        $this->locked($review->id, function () use ($review) {
+            // Votes are only ever added by vote(): keep the ones on disk, so a
+            // review loaded before someone voted doesn't put the old count back.
+            if ($onDisk = $this->fromDisk($review)) {
+                $review->voters = array_values(array_unique([...$onDisk->voters, ...$review->voters]));
+                $review->helpful = max(count($review->voters), $onDisk->helpful);
+            }
+
+            $this->store()->save($review);
+        });
     }
 
     public function delete(Review $review): void
@@ -87,21 +97,49 @@ class StacheReviewRepository implements ReviewRepository
 
     public function vote(Review $review, string $voter): bool
     {
-        // Read afresh, so votes made since the review was loaded count.
-        $fresh = $this->find($review->id) ?? $review;
+        return $this->locked($review->id, function () use ($review, $voter) {
+            // Read from the file itself, so votes made by other requests count.
+            $fresh = $this->fromDisk($review) ?? $this->find($review->id) ?? $review;
 
-        if (in_array($voter, $fresh->voters, true)) {
-            return false;
+            if (in_array($voter, $fresh->voters, true)) {
+                return false;
+            }
+
+            $fresh->voters[] = $voter;
+            $fresh->helpful = count($fresh->voters);
+            $this->store()->save($fresh);
+
+            $review->voters = $fresh->voters;
+            $review->helpful = $fresh->helpful;
+
+            return true;
+        });
+    }
+
+    /**
+     * The review as its file has it now, which may be newer than the
+     * Stache's copy when another request has just written it.
+     */
+    protected function fromDisk(Review $review): ?Review
+    {
+        $path = $review->path();
+
+        if (! is_file($path)) {
+            return null;
         }
 
-        $fresh->voters[] = $voter;
-        $fresh->helpful = count($fresh->voters);
-        $this->store()->save($fresh);
+        clearstatcache(true, $path);
 
-        $review->voters = $fresh->voters;
-        $review->helpful = $fresh->helpful;
+        return $this->store()->makeItemFromFile($path, (string) file_get_contents($path));
+    }
 
-        return true;
+    /**
+     * Run a change to one review with no other request changing it at the
+     * same time.
+     */
+    protected function locked(string $id, callable $callback): mixed
+    {
+        return Cache::lock('reviews:review:'.$id, 10)->block(5, $callback);
     }
 
     public function all(): LazyCollection
