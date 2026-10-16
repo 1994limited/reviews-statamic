@@ -1,11 +1,11 @@
 # Changelog
 
-## 1.1.0 (unreleased)
+## 1.1.0 (2026-10-16)
 
 ### Added
 - **Ready-made reviews** (`{{ reviews:display }}`): a finished section with the average and star breakdown, the reviews (sorting, a rating filter, pages, "helpful" buttons, replies) and the form, in one tag, or in parts (`display_summary`, `display_list`, `display_form`). Works without JavaScript and on statically cached pages; the views can be published and edited.
 - **Default styles** (`{{ reviews:styles }}`) that take the site's own font, size and colours, follow a site's dark mode without a setting of their own, with every colour, size and gap a `--reviews-*` CSS variable. In a cascade layer, so any CSS of the site's own wins. Publish them to edit (`--tag=reviews-css`), or link to them yourself (`{{ reviews:styles_url }}`).
-- **Review schema in an SEO addon's own schema** (`{{ reviews:schema_data }}`): the rating and reviews as JSON, or as properties that keep the JSON valid with or without reviews, for fields such as SEO Pro's JSON-LD Schema. `Schema::parts()` for the same in PHP.
+- **Review schema in an SEO addon's own schema** (`{{ reviews:schema_data }}`): the rating and reviews as JSON, or as properties that keep the JSON valid with or without reviews, for fields such as SEO Pro's JSON-LD Schema field. `Schema::parts()` for the same in PHP.
 - **The translations can be published** (`--tag=reviews-translations`).
 
 ## 1.0.0 (2026-10-16)
