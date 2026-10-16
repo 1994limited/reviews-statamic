@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.1 (unreleased)
+## 1.1.1 (2026-10-16)
 
 ### Fixed
 - **"Helpful" counts can't go backwards.** Saving a review that was loaded before someone voted (a reply, say) no longer puts the old count back, with either driver. The file driver now changes one review at a time, re-reading it from disk, so two requests can't overwrite each other's votes.
