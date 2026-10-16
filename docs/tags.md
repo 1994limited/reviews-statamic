@@ -95,6 +95,18 @@ The message after sending a review or a vote, and the errors (a pair: `field`, `
 
 Review schema for the entry. Parameters: `type`, `id`, `reviews`. See [Templates](templates.md#review-schema).
 
+## `{{ reviews:schema_data }}`
+
+The rating and reviews from the review schema as JSON, without a script tag, to add to schema of your own or an SEO addon's. Parameters: `format="properties"`, `only="aggregate"`, `reviews`. See [Templates](templates.md#with-an-seo-addon).
+
+## `{{ reviews:display }}`, `display_summary`, `display_list`, `display_form`
+
+The ready-made reviews section, or its parts. Parameters: `entry`, `heading`, `sort`, `per_page`, `form`. See [Ready-made reviews](ready-made.md).
+
+## `{{ reviews:styles }}`, `{{ reviews:styles_url }}`
+
+The default stylesheet for the ready-made views, as a `<link>`, or its address. See [Ready-made reviews](ready-made.md#the-stylesheet).
+
 ## `{{ reviews:can_review }}`
 
 Whether the visitor may review the entry.

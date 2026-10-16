@@ -17,6 +17,7 @@ use NineteenNinetyFour\Reviews\ReviewException;
 use NineteenNinetyFour\Reviews\Reviews;
 use NineteenNinetyFour\Reviews\Spam;
 use NineteenNinetyFour\Reviews\Submissions;
+use NineteenNinetyFour\Reviews\Tags\ReviewsTags;
 use Statamic\Facades\User;
 
 /**
@@ -61,6 +62,22 @@ class ActionsController
         $message = $review->isApproved() ? __('reviews::messages.thanks_published') : __('reviews::messages.thanks_pending');
 
         return $this->success($request, $message, ['review' => ['id' => $review->id, 'status' => $review->status->value]]);
+    }
+
+    /**
+     * The default stylesheet. Cached for a year when asked for with its
+     * version (?v=…), which changes whenever the file does.
+     */
+    public function styles(Request $request): Response
+    {
+        $path = ReviewsTags::stylesheetPath();
+        $versioned = $request->query('v') === substr((string) md5_file($path), 0, 12);
+
+        return response((string) file_get_contents($path), 200, [
+            'Content-Type' => 'text/css; charset=utf-8',
+            'Cache-Control' => $versioned ? 'public, max-age=31536000, immutable' : 'public, max-age=300',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     /**

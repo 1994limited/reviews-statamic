@@ -5,6 +5,9 @@ use NineteenNinetyFour\Reviews\Http\Controllers\ActionsController;
 
 // At /!/reviews/...
 
+// The default styles for the ready-made views ({{ reviews:styles }}).
+Route::get('reviews.css', [ActionsController::class, 'styles'])->name('styles');
+
 // Writing, changing and deleting a review. Limited per visitor.
 Route::middleware('throttle:reviews-submit')->group(function () {
     Route::post('submit', [ActionsController::class, 'submit'])->name('submit');

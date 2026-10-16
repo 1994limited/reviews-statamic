@@ -1,0 +1,92 @@
+{{# The review form. In {{ nocache }}, so it's right for each visitor on a statically cached page. #}}
+{{ if wrap }}<div class="reviews-ui">{{ /if }}
+<div id="write-a-review">
+    {{ nocache }}
+        {{ reviews:form :entry="entry" class="reviews-ui__form" redirect="{{ redirect }}" error_redirect="{{ error_redirect }}" }}
+            <h2 class="reviews-ui__heading">{{ if editing }}{{ trans key="reviews::messages.display.yours" }}{{ else }}{{ trans key="reviews::messages.display.write" }}{{ /if }}</h2>
+
+            {{ if success }}<p class="reviews-ui__message" role="status">{{ success }}</p>{{ /if }}
+
+            {{ if reason }}
+                <p>{{ reason_message }}</p>
+            {{ else }}
+                {{ if editing }}
+                    <p class="reviews-ui__muted">{{ if review:pending }}{{ trans key="reviews::messages.display.editing_pending" }}{{ else }}{{ trans key="reviews::messages.display.editing_live" }}{{ /if }}</p>
+                {{ /if }}
+
+                {{ if has_errors }}
+                    <div class="reviews-ui__message reviews-ui__message--error" role="alert">
+                        <ul>{{ error_list }}<li>{{ value }}</li>{{ /error_list }}</ul>
+                    </div>
+                {{ /if }}
+
+                <fieldset class="reviews-ui__rating">
+                    <legend class="reviews-ui__label">{{ trans key="reviews::messages.display.your_rating" }}</legend>
+                    <div class="reviews-ui__rating-stars">
+                        {{ loop from="1" to="5" }}
+                            <input type="radio" id="reviews-rating-{{ value }}" name="rating" value="{{ value }}" required {{ if old:rating == value }}checked{{ /if }}>
+                            <label for="reviews-rating-{{ value }}" title="{{ trans_choice key="reviews::messages.display.stars" :count="value" }}"><span aria-hidden="true">★</span><span class="reviews-ui__sr-only">{{ trans_choice key="reviews::messages.display.stars" :count="value" }}</span></label>
+                        {{ /loop }}
+                    </div>
+                </fieldset>
+
+                {{ if criteria }}
+                    <div class="reviews-ui__row">
+                        {{ criteria }}
+                            <label class="reviews-ui__field">
+                                <span class="reviews-ui__label">{{ label }} <span class="reviews-ui__muted">{{ trans key="reviews::messages.display.optional" }}</span></span>
+                                <select class="reviews-ui__input" name="{{ name }}">
+                                    <option value="">–</option>
+                                    {{ loop from="5" to="1" }}<option value="{{ value }}" {{ if old == value }}selected{{ /if }}>{{ trans_choice key="reviews::messages.display.stars" :count="value" }}</option>{{ /loop }}
+                                </select>
+                            </label>
+                        {{ /criteria }}
+                    </div>
+                {{ /if }}
+
+                <label class="reviews-ui__field">
+                    <span class="reviews-ui__label">{{ trans key="reviews::messages.display.title" }} {{ unless title_required }}<span class="reviews-ui__muted">{{ trans key="reviews::messages.display.optional" }}</span>{{ /unless }}</span>
+                    <input class="reviews-ui__input" name="title" value="{{ old:title }}" maxlength="{{ title_limit }}" {{ if title_required }}required{{ /if }}>
+                </label>
+
+                <label class="reviews-ui__field">
+                    <span class="reviews-ui__label">{{ trans key="reviews::messages.display.body" }} {{ unless body_required }}<span class="reviews-ui__muted">{{ trans key="reviews::messages.display.optional" }}</span>{{ /unless }}</span>
+                    <textarea class="reviews-ui__input" name="body" rows="5" maxlength="{{ body_limit }}" {{ if body_required }}required{{ /if }}>{{ old:body }}</textarea>
+                </label>
+
+                {{ if needs_name }}
+                    <div class="reviews-ui__row">
+                        <label class="reviews-ui__field">
+                            <span class="reviews-ui__label">{{ trans key="reviews::messages.display.name" }}</span>
+                            <input class="reviews-ui__input" name="name" value="{{ old:name }}" maxlength="{{ name_limit }}" autocomplete="name" required>
+                        </label>
+                        <label class="reviews-ui__field">
+                            <span class="reviews-ui__label">{{ trans key="reviews::messages.display.email" }} <span class="reviews-ui__muted">{{ trans key="reviews::messages.display.never_shown" }}</span></span>
+                            <input class="reviews-ui__input" type="email" name="email" value="{{ old:email }}" autocomplete="email" required>
+                        </label>
+                    </div>
+                {{ /if }}
+
+                {{ if photos_enabled }}
+                    {{ if existing_photos }}
+                        <div class="reviews-ui__photos">
+                            {{ existing_photos }}
+                                <label class="reviews-ui__muted">{{ if url }}<img src="{{ url }}" alt="">{{ else }}{{ trans key="reviews::messages.display.photo_waiting" }}{{ /if }}<span><input type="checkbox" name="remove_photos[]" value="{{ index }}"> {{ trans key="reviews::messages.display.remove" }}</span></label>
+                            {{ /existing_photos }}
+                        </div>
+                    {{ /if }}
+                    <label class="reviews-ui__field">
+                        <span class="reviews-ui__label">{{ trans key="reviews::messages.display.photos" :max="max_photos" }} <span class="reviews-ui__muted">{{ trans key="reviews::messages.display.optional" }}</span></span>
+                        <input class="reviews-ui__input" type="file" name="photos[]" accept="image/jpeg,image/png,image/webp" multiple>
+                    </label>
+                {{ /if }}
+
+                {{ captcha }}
+
+                {{ if moderated }}<p class="reviews-ui__muted">{{ trans key="reviews::messages.display.checked_first" }}</p>{{ /if }}
+                <button type="submit" class="reviews-ui__button">{{ if editing }}{{ trans key="reviews::messages.display.update" }}{{ else }}{{ trans key="reviews::messages.display.send" }}{{ /if }}</button>
+            {{ /if }}
+        {{ /reviews:form }}
+    {{ /nocache }}
+</div>
+{{ if wrap }}</div>{{ /if }}

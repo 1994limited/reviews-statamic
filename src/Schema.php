@@ -97,6 +97,28 @@ class Schema
     }
 
     /**
+     * Just the rating and reviews, to add to an entry's schema printed by
+     * something else (an SEO addon, say). Null with no approved review.
+     *
+     * @return array{aggregateRating: array<string, mixed>, review?: array<int, array<string, mixed>>}|null
+     */
+    public function parts(Entry $entry, ?int $reviews = null): ?array
+    {
+        $data = $this->data($entry, null, null, $reviews);
+
+        return $data === null ? null : array_intersect_key($data, array_flip(['aggregateRating', 'review']));
+    }
+
+    /**
+     * JSON safe to print anywhere in a page, including inside a script tag:
+     * nothing in a review can close the tag.
+     */
+    public static function encode(array $data, bool $pretty = false): string
+    {
+        return (string) json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | ($pretty ? JSON_PRETTY_PRINT : 0));
+    }
+
+    /**
      * The JSON-LD in a script tag, safe to print in the page: nothing in a
      * review can close the tag.
      */
@@ -108,8 +130,6 @@ class Schema
             return '';
         }
 
-        $json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_PRETTY_PRINT);
-
-        return '<script type="application/ld+json">'.$json.'</script>';
+        return '<script type="application/ld+json">'.static::encode($data, pretty: true).'</script>';
     }
 }

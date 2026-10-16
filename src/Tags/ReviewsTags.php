@@ -10,6 +10,7 @@ use NineteenNinetyFour\Reviews\Review;
 use NineteenNinetyFour\Reviews\ReviewQuery;
 use NineteenNinetyFour\Reviews\Reviews;
 use NineteenNinetyFour\Reviews\Schema;
+use NineteenNinetyFour\Reviews\Settings;
 use NineteenNinetyFour\Reviews\Spam;
 use NineteenNinetyFour\Reviews\Submissions;
 use NineteenNinetyFour\Reviews\Summary;
@@ -277,6 +278,42 @@ class ReviewsTags extends Tags
     }
 
     /**
+     * {{ reviews:schema_data }}: the review schema's rating and reviews as
+     * JSON, without a script tag, to add to schema you print yourself or
+     * another addon's: {"aggregateRating": {…}, "review": […]}.
+     * only="aggregate" for the AggregateRating object alone; reviews="0"
+     * to leave the reviews out; format="properties" for the properties
+     * without braces, each ending in a comma, to put first in JSON-LD of
+     * your own. Empty when there's no approved review.
+     */
+    public function schemaData(): string
+    {
+        $entry = $this->entry();
+        $parts = $entry ? app(Schema::class)->parts($entry, $this->params->has('reviews') ? max(0, $this->params->int('reviews')) : null) : null;
+
+        if ($parts === null) {
+            return '';
+        }
+
+        if ($this->param('only') === 'aggregate') {
+            $parts = ['aggregateRating' => $parts['aggregateRating']];
+
+            if ($this->param('format') !== 'properties') {
+                return Schema::encode($parts['aggregateRating']);
+            }
+        }
+
+        // The properties alone, each followed by a comma, to go straight
+        // after the "{" of JSON-LD written elsewhere (an SEO addon's schema
+        // field): valid JSON with reviews or without.
+        if ($this->param('format') === 'properties') {
+            return implode('', array_map(fn ($key, $value) => Schema::encode([$key => $value]) === '' ? '' : substr(Schema::encode([$key => $value]), 1, -1).',', array_keys($parts), $parts));
+        }
+
+        return Schema::encode($parts);
+    }
+
+    /**
      * {{ reviews:can_review }}: whether the visitor may review the entry.
      */
     public function canReview(): bool
@@ -284,6 +321,138 @@ class ReviewsTags extends Tags
         $entry = $this->entry();
 
         return $entry !== null && app(Submissions::class)->refusal($entry, User::current(), Submissions::sessionOrders(request())) === null;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ready-made views
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * {{ reviews:display }}: the average, the reviews and the form, ready
+     * made. heading="…", sort="helpful" (the order until a visitor
+     * chooses), per_page="10", form="false" to leave the form out.
+     */
+    public function display(): string
+    {
+        $data = $this->displayData();
+
+        if ($data === null) {
+            return '';
+        }
+
+        $parts = ['wrap' => false] + $data;
+
+        return view('reviews::display.section', $data + [
+            'heading' => $this->param('heading') ?? __('reviews::messages.display.heading'),
+            'summary' => view('reviews::display.summary', $parts)->render(),
+            'list' => view('reviews::display.list', $parts)->render(),
+            'form' => $data['show_form'] ? view('reviews::display.form', $parts)->render() : '',
+        ])->render();
+    }
+
+    /**
+     * {{ reviews:display_summary }}: the ready-made average and breakdown.
+     */
+    public function displaySummary(): string
+    {
+        return $this->displayPart('summary');
+    }
+
+    /**
+     * {{ reviews:display_list }}: the ready-made list of reviews.
+     */
+    public function displayList(): string
+    {
+        return $this->displayPart('list');
+    }
+
+    /**
+     * {{ reviews:display_form }}: the ready-made review form.
+     */
+    public function displayForm(): string
+    {
+        return $this->displayPart('form');
+    }
+
+    /**
+     * {{ reviews:styles }}: the default styles for the ready-made views, as
+     * a <link> for your <head>.
+     */
+    public function styles(): string
+    {
+        return '<link rel="stylesheet" href="'.e(static::stylesheetUrl()).'">';
+    }
+
+    /**
+     * {{ reviews:styles_url }}: the default stylesheet's address, to link
+     * to or load yourself.
+     */
+    public function stylesUrl(): string
+    {
+        return static::stylesheetUrl();
+    }
+
+    public static function stylesheetUrl(): string
+    {
+        return url('!/reviews/reviews.css').'?v='.substr((string) md5_file(static::stylesheetPath()), 0, 12);
+    }
+
+    public static function stylesheetPath(): string
+    {
+        return __DIR__.'/../../resources/css/reviews.css';
+    }
+
+    protected function displayPart(string $part): string
+    {
+        $data = $this->displayData();
+
+        return $data === null ? '' : view('reviews::display.'.$part, ['wrap' => true] + $data)->render();
+    }
+
+    /**
+     * What the ready-made views need, or null without an entry.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function displayData(): ?array
+    {
+        $entry = $this->entry();
+
+        if (! $entry) {
+            return null;
+        }
+
+        $sorts = ['helpful', 'newest', 'highest', 'lowest'];
+        $requested = request()->query('sort');
+        $default = $this->param('sort');
+        $sort = is_string($requested) && in_array($requested, $sorts, true) ? $requested : (in_array($default, $sorts, true) ? $default : 'helpful');
+
+        $rating = request()->query('rating');
+        $rating = is_string($rating) ? Review::score($rating) : null;
+
+        $current = url()->current();
+
+        return [
+            'entry' => $entry->id(),
+            'sort' => $sort,
+            'sorts' => collect($sorts)->map(fn ($value) => [
+                'value' => $value,
+                'label' => __('reviews::messages.display.sorts.'.$value),
+                'selected' => $value === $sort,
+            ])->all(),
+            'rating' => $rating,
+            'per_page' => max(1, min(50, $this->params->int('per_page', (int) config('reviews.per_page', 10)))),
+            'show_form' => $this->params->bool('form', true),
+            'redirect' => $current.'#reviews',
+            'error_redirect' => $current.'#write-a-review',
+            'title_required' => Settings::bool('require_title'),
+            'body_required' => Settings::bool('require_body'),
+            'site_name' => e(Site::current()->name()),
+            // "Checked before they appear" is only true when nothing is published straight away.
+            'moderated' => Settings::string('auto_approve', 'never') === 'never',
+        ];
     }
 
     /*
@@ -477,7 +646,7 @@ class ReviewsTags extends Tags
      */
     protected function knownParams(): array
     {
-        return ['entry', 'id', 'redirect', 'error_redirect', 'sort', 'rating', 'verified', 'photos', 'site', 'limit', 'paginate', 'page_name', 'as', 'type', 'reviews', 'csrf'];
+        return ['entry', 'id', 'redirect', 'error_redirect', 'sort', 'rating', 'verified', 'photos', 'site', 'limit', 'paginate', 'page_name', 'as', 'type', 'reviews', 'csrf', 'heading', 'per_page', 'form', 'format', 'only'];
     }
 
     protected function reviews(): Reviews

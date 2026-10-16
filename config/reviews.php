@@ -193,6 +193,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
+    // Reviews per page in the ready-made views ({{ reviews:display }}).
     'per_page' => 10,
 
     /*

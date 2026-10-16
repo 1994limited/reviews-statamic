@@ -10,24 +10,25 @@ Reviews collects reviews and star ratings on your own site. Visitors write them 
 
 ## Building the front end
 
-4. [Templates](templates.md): the average, the reviews, the form, and review schema. Start here.
-5. [Tags](tags.md): every `{{ reviews:* }}` tag, its parameters and variables.
-6. [Spam](spam.md): the honeypot, the time trap, captchas (Turnstile, hCaptcha, reCAPTCHA) and rate limits.
-7. [Photos](photos.md): letting reviewers add photos, and how they're kept private until approved.
-8. [Static caching](static-caching.md): what to wrap in `{{ nocache }}`, and what clears itself.
-9. [The demo shop](demo.md): Dog-ear Books, a whole site built with Reviews, to run or copy from.
-10. [Cargo](cargo.md): verified purchases, reviews from buyers only, and emails asking customers for a review.
+4. [Ready-made reviews](ready-made.md): a finished reviews section and default styles in two tags, and changing how it looks with CSS variables. The quickest start.
+5. [Templates](templates.md): the average, the reviews, the form and review schema in your own markup, and review schema with an SEO addon.
+6. [Tags](tags.md): every `{{ reviews:* }}` tag, its parameters and variables.
+7. [Spam](spam.md): the honeypot, the time trap, captchas (Turnstile, hCaptcha, reCAPTCHA) and rate limits.
+8. [Photos](photos.md): letting reviewers add photos, and how they're kept private until approved.
+9. [Static caching](static-caching.md): what to wrap in `{{ nocache }}`, and what clears itself.
+10. [The demo shop](demo.md): Dog-ear Books, a whole site built with Reviews, to run or copy from.
+11. [Cargo](cargo.md): verified purchases, reviews from buyers only, and emails asking customers for a review.
 
 ## Running a site
 
-11. [Moderation](moderation.md): the Control Panel, approving, replying, permissions, the dashboard widget and the entry field.
-12. [Emails](emails.md): to editors about new reviews, and to reviewers.
-13. [Privacy](privacy.md): what's kept, exporting and forgetting someone's reviews, and fair-review law.
+12. [Moderation](moderation.md): the Control Panel, approving, replying, permissions, the dashboard widget and the entry field.
+13. [Emails](emails.md): to editors about new reviews, and to reviewers.
+14. [Privacy](privacy.md): what's kept, exporting and forgetting someone's reviews, and fair-review law.
 
 ## Reference
 
-14. [Events and PHP API](php-api.md): events, the `Reviews` service, and querying reviews.
-15. [Troubleshooting](troubleshooting.md): common problems and fixes.
+15. [Events and PHP API](php-api.md): events, the `Reviews` service, and querying reviews.
+16. [Troubleshooting](troubleshooting.md): common problems and fixes.
 
 ## Requirements
 

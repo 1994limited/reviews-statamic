@@ -1,0 +1,12 @@
+{{#
+    {{ reviews:display }}: the average, the reviews and the form together.
+    Publish with `php artisan vendor:publish --tag=reviews-views` to change it.
+#}}
+<section class="reviews-ui" id="reviews" aria-labelledby="reviews-heading">
+    <h2 class="reviews-ui__heading" id="reviews-heading">{{ heading }}</h2>
+    <div class="reviews-ui__columns">
+        {{ summary }}
+        {{ list }}
+    </div>
+    {{ form }}
+</section>

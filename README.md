@@ -14,13 +14,14 @@ Other review addons copy reviews in from Google, Yotpo or Trustpilot. Reviews co
 - **Fair by design.** No setting publishes or hides reviews by their stars, and editors can't change what reviewers wrote, in line with UK, EU and US rules on fake and suppressed reviews.
 - **Averages and breakdowns.** The average, the count, how many of each star, and each criterion's average, cached until a review changes.
 - **Sort, filter and paginate.** Newest, highest, lowest or most helpful; by rating, verified purchases or photos. **"Was this helpful?"** votes.
-- **Review schema.** JSON-LD with the average rating and latest reviews, for star ratings in search results: Product, Book, Course, Recipe, or any schema.org type.
+- **Review schema.** JSON-LD with the average rating and latest reviews, for star ratings in search results: Product, Book, Course, Recipe, or any schema.org type. Joins the schema from SEO addons such as SEO Pro.
 - **Spam protection without puzzles.** A honeypot, a time trap and a link limit on every form, rate limits, and optionally a captcha: **Cloudflare Turnstile, hCaptcha, reCAPTCHA v2 or v3**, or your own.
 - **Photos**, if you want them: re-saved without location data, and kept private until the review is approved.
 - **Emails.** New reviews to editors; approvals and replies to reviewers.
 - **Cargo shops.** Verified purchase badges, reviews from buyers only, and emails asking customers to review what they bought, a set time after their order.
 - **Private by default.** No IP addresses kept. Export or forget someone's reviews with one command.
-- **Works without JavaScript**, and on statically cached pages. **Your markup, in Antlers or Blade**: every example has both.
+- **Ready-made, or your own markup.** Two tags give you a finished reviews section whose styles take your site's fonts and colours, with every colour and size a CSS variable. Or write your own markup in Antlers or Blade: every example has both.
+- **Works without JavaScript**, and on statically cached pages.
 
 | A book's reviews | The form | The moderation queue | A review |
 | --- | --- | --- | --- |
@@ -40,7 +41,24 @@ The screenshots are from Dog-ear Books, a made-up bookshop built only with the t
 composer require 1994/reviews-statamic
 ```
 
-Choose which collections take reviews in **Tools → Addons → Reviews → Settings**. Then, in the entry's template, show the average rating:
+Choose which collections take reviews in **Tools → Addons → Reviews → Settings**. For a finished reviews section with default styles, that match your site's fonts and colours, add two tags ([Ready-made reviews](docs/ready-made.md)):
+
+```antlers
+{{ reviews:styles }}  {{# in your layout's <head> #}}
+{{ reviews:display }} {{# in the entry's template #}}
+```
+
+<details>
+<summary>Blade</summary>
+
+```blade
+<s:reviews:styles />  {{-- in your layout's <head> --}}
+<s:reviews:display /> {{-- in the entry's template --}}
+```
+
+</details>
+
+Or write your own markup. In the entry's template, show the average rating:
 
 ```antlers
 {{ reviews:summary }}
@@ -256,7 +274,7 @@ Reviews are kept in flat files by default. For the database, set `REVIEWS_DRIVER
 Everything else is in [the documentation](docs/README.md):
 
 - [Installation](docs/installation.md), [settings](docs/configuration.md) and [storage drivers](docs/drivers.md)
-- [Templates](docs/templates.md), [tags](docs/tags.md) and [the demo shop](docs/demo.md)
+- [Ready-made reviews](docs/ready-made.md) and their styles, [templates](docs/templates.md), [tags](docs/tags.md) and [the demo shop](docs/demo.md)
 - [Spam](docs/spam.md), [photos](docs/photos.md) and [static caching](docs/static-caching.md)
 - [Cargo](docs/cargo.md): verified purchases, buyers only and review requests
 - [Moderation](docs/moderation.md), [emails](docs/emails.md) and [privacy](docs/privacy.md)

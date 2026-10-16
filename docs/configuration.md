@@ -48,7 +48,7 @@ Reviews are never published, held back or hidden because of their star rating: t
 | `spam.captcha.*` | off | [Spam](spam.md#captchas). |
 | `throttle.submit` | 5 | Reviews per visitor per ten minutes. |
 | `throttle.votes` | 30 | "Helpful" votes per visitor per minute. |
-| `per_page` | 10 | Not used by the tags (use `paginate="10"`); for your own code. |
+| `per_page` | 10 | Reviews per page in the [ready-made views](ready-made.md). Your own templates use `paginate="10"`. |
 | `schema.types` | `[]` | The schema.org type of each collection's entries: `['books' => 'Book']`. [Templates](templates.md#review-schema). |
 | `schema.reviews` | 5 | How many reviews go in the schema. |
 | `notifications.to`, `approved`, `replied` | `[]`, false, true | As the settings. |

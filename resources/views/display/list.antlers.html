@@ -1,0 +1,70 @@
+{{# The reviews, with a choice of order, pages and "helpful" buttons. #}}
+{{ if wrap }}<div class="reviews-ui">{{ /if }}
+<div class="reviews-ui__list-wrap" id="reviews-list">
+    <form class="reviews-ui__toolbar" method="get" action="#reviews-list">
+        <label>
+            <span>{{ trans key="reviews::messages.display.sort" }}</span>
+            <select class="reviews-ui__select" name="sort" onchange="this.form.submit()">
+                {{ sorts }}<option value="{{ value }}" {{ if selected }}selected{{ /if }}>{{ label }}</option>{{ /sorts }}
+            </select>
+        </label>
+        {{ if rating }}
+            <input type="hidden" name="rating" value="{{ rating }}">
+            <a href="?sort={{ sort }}#reviews-list">{{ trans_choice key="reviews::messages.display.showing" :count="rating" }}</a>
+        {{ /if }}
+        <noscript><button class="reviews-ui__link-button">{{ trans key="reviews::messages.display.sort_button" }}</button></noscript>
+    </form>
+
+    {{ if {reviews:success} }}<p class="reviews-ui__message" role="status">{{ reviews:success }}</p>{{ /if }}
+
+    {{ reviews :entry="entry" :sort="sort" :rating="rating" :paginate="per_page" as="items" }}
+        <div class="reviews-ui__list">
+            {{ items }}
+                <article class="reviews-ui__review" id="review-{{ id }}">
+                    <div class="reviews-ui__review-head">
+                        <span class="reviews-ui__stars" role="img" aria-label="{{ trans key="reviews::messages.display.rated" :rating="rating" }}">{{ stars }}<span class="reviews-ui__star reviews-ui__star--{{ type }}" aria-hidden="true">★</span>{{ /stars }}</span>
+                        {{ if title }}<h3 class="reviews-ui__review-title">{{ title }}</h3>{{ /if }}
+                    </div>
+                    {{ if ratings }}
+                        <p class="reviews-ui__review-criteria reviews-ui__muted">{{ ratings }}<span>{{ label }} {{ rating }}/5</span>{{ /ratings }}</p>
+                    {{ /if }}
+                    {{ if body }}<p>{{ body }}</p>{{ /if }}
+                    {{ if photos }}
+                        <div class="reviews-ui__photos">{{ photos }}<a href="{{ url }}"><img src="{{ url }}" alt="{{ alt }}" loading="lazy"></a>{{ /photos }}</div>
+                    {{ /if }}
+                    <p class="reviews-ui__by reviews-ui__muted">
+                        <strong>{{ name }}</strong>
+                        <time datetime="{{ date format="Y-m-d" }}">{{ date format="j F Y" }}</time>
+                        {{ if verified }}<span class="reviews-ui__verified">✓ {{ trans key="reviews::messages.display.verified" }}</span>{{ /if }}
+                    </p>
+                    {{ if has_reply }}
+                        <blockquote class="reviews-ui__reply">
+                            <span class="reviews-ui__reply-label">{{ trans key="reviews::messages.display.reply" :name="site_name" }}</span>
+                            {{ reply }}
+                        </blockquote>
+                    {{ /if }}
+                    <div class="reviews-ui__actions">
+                        {{ reviews:helpful }}
+                            <button class="reviews-ui__link-button">{{ trans key="reviews::messages.display.helpful" }}{{ if helpful }} ({{ helpful }}){{ /if }}</button>
+                        {{ /reviews:helpful }}
+                    </div>
+                </article>
+            {{ /items }}
+        </div>
+
+        {{ if no_results }}
+            <p class="reviews-ui__empty">{{ if rating }}{{ trans key="reviews::messages.display.none_with_rating" }}{{ else }}{{ trans key="reviews::messages.display.none_yet" }}{{ /if }}</p>
+        {{ /if }}
+
+        {{ paginate }}
+            {{ if total_pages > 1 }}
+                <nav class="reviews-ui__pages" aria-label="{{ trans key="reviews::messages.display.pages" }}">
+                    {{ if prev_page }}<a href="{{ prev_page }}#reviews-list">← {{ trans key="reviews::messages.display.previous" }}</a>{{ else }}<span></span>{{ /if }}
+                    <span class="reviews-ui__muted">{{ trans key="reviews::messages.display.page_of" :page="current_page" :pages="total_pages" }}</span>
+                    {{ if next_page }}<a href="{{ next_page }}#reviews-list">{{ trans key="reviews::messages.display.next" }} →</a>{{ else }}<span></span>{{ /if }}
+                </nav>
+            {{ /if }}
+        {{ /paginate }}
+    {{ /reviews }}
+</div>
+{{ if wrap }}</div>{{ /if }}

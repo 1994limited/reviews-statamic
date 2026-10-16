@@ -1,0 +1,32 @@
+{{# The average rating, how many of each star, and each criterion's average. #}}
+{{ if wrap }}<div class="reviews-ui">{{ /if }}
+<div class="reviews-ui__summary">
+    {{ reviews:summary :entry="entry" }}
+        {{ if has_reviews }}
+            <p class="reviews-ui__average">
+                <span class="reviews-ui__average-number">{{ average }}</span>
+                <span class="reviews-ui__muted">{{ trans key="reviews::messages.display.out_of" }}</span>
+            </p>
+            <span class="reviews-ui__stars" role="img" aria-label="{{ trans key="reviews::messages.display.rated" :rating="average" }}">{{ stars }}<span class="reviews-ui__star reviews-ui__star--{{ type }}" aria-hidden="true">★</span>{{ /stars }}</span>
+            <p class="reviews-ui__muted">{{ trans_choice key="reviews::messages.display.from_reviews" :count="count" }}</p>
+            <ul class="reviews-ui__bars">
+                {{ breakdown }}
+                    <li class="reviews-ui__bar-row">
+                        <a href="?rating={{ rating }}#reviews-list">{{ trans_choice key="reviews::messages.display.stars" :count="rating" }}</a>
+                        <span class="reviews-ui__bar" aria-hidden="true"><span class="reviews-ui__bar-fill" style="width: {{ percent }}%"></span></span>
+                        <span class="reviews-ui__muted">{{ total }}</span>
+                    </li>
+                {{ /breakdown }}
+            </ul>
+            {{ if criteria }}
+                <dl class="reviews-ui__criteria">
+                    {{ criteria }}{{ if average }}<div><dt>{{ label }}</dt><dd>{{ average }}</dd></div>{{ /if }}{{ /criteria }}
+                </dl>
+            {{ /if }}
+        {{ else }}
+            <p class="reviews-ui__empty">{{ trans key="reviews::messages.display.none_yet" }}</p>
+        {{ /if }}
+    {{ /reviews:summary }}
+    {{ if show_form }}<a class="reviews-ui__button reviews-ui__button--quiet" href="#write-a-review">{{ trans key="reviews::messages.display.write" }}</a>{{ /if }}
+</div>
+{{ if wrap }}</div>{{ /if }}
