@@ -34,8 +34,10 @@
         --reviews-button-border: currentColor;
         --reviews-star: #f5a524;
         --reviews-star-empty: color-mix(in srgb, currentColor 20%, transparent);
-        --reviews-verified: #2f7d4a;
-        --reviews-error: #c0392b;
+        /* Green and red mixed with the text colour, so they read on light
+           and dark backgrounds alike. */
+        --reviews-verified: color-mix(in srgb, #23804a 60%, currentColor);
+        --reviews-error: color-mix(in srgb, #d9412f 65%, currentColor);
         --reviews-focus: Highlight;
 
         /* Shape and space */

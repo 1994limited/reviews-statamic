@@ -104,8 +104,8 @@ Everything is drawn from `--reviews-*` variables. Set any of them in your own CS
 | `--reviews-button-border` | `currentColor` | |
 | `--reviews-star` | `#f5a524` | Filled stars and the breakdown's bars. |
 | `--reviews-star-empty` | the text colour at 20% | Empty stars and bars. |
-| `--reviews-verified` | `#2f7d4a` | "Verified purchase". |
-| `--reviews-error` | `#c0392b` | Form errors. |
+| `--reviews-verified` | green, mixed with the text colour | "Verified purchase". |
+| `--reviews-error` | red, mixed with the text colour | Form errors. |
 | `--reviews-focus` | `Highlight` | The keyboard focus ring: the system's highlight colour. |
 | `--reviews-radius` | `0.5rem` | Corners. |
 | `--reviews-gap` | `1.5rem` | Space between reviews, and inside the form. |
@@ -154,6 +154,41 @@ php artisan vendor:publish --tag=reviews-views
 They're in `resources/views/vendor/reviews/display/`: `section`, `summary`, `list` and `form`. Each uses only the tags in [Tags](tags.md), so anything in [Templates](templates.md) can go in them. Delete a file to go back to the addon's own.
 
 When you want full control, build your own from [Templates](templates.md) instead: the ready-made views are a starting point, not a requirement.
+
+## Dark mode
+
+There's nothing to turn on or off: the styles have no dark mode of their own. They never look at the visitor's dark-mode setting (`prefers-color-scheme`); they follow the text colour of the page they're on. So:
+
+- **On a site that's only light**, the reviews are light, even for visitors whose computer is set to dark.
+- **On a site with a dark mode** (by a class such as `.dark`, a media query or a switch), the reviews follow it, because the site changes its text colour.
+
+The borders, muted text and empty stars are the text colour, faded; the "Verified purchase" green and error red are mixed with it, so they're readable on light and dark backgrounds alike. The yellow of the stars is the same on both.
+
+Two things to check on a site with a dark mode:
+
+- **Form controls.** Text boxes take your colours, but browsers draw drop-down menus, their lists and the file picker's button themselves, light unless the page says it's dark. Most dark modes already set `color-scheme: dark` for this; if yours doesn't, add it to the dark theme:
+
+    ```css
+    .dark { color-scheme: dark; }
+    ```
+
+- **Colours of your own.** To use different colours in your dark mode, set the variables in it:
+
+    ```css
+    .dark .reviews-ui {
+        --reviews-star: #fbbf24;
+        --reviews-button-bg: #f9fafb;
+        --reviews-button-text: #111827;
+    }
+    ```
+
+    or, for a dark mode that follows the visitor's setting:
+
+    ```css
+    @media (prefers-color-scheme: dark) {
+        .reviews-ui { --reviews-star: #fbbf24; }
+    }
+    ```
 
 ## Wording and translation
 

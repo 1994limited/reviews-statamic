@@ -247,9 +247,14 @@ class DisplayTest extends TestCase
         $this->assertStringContainsString('--reviews-font-size: inherit;', $css);
 
         // Every colour is a variable, set once, at the top.
-        preg_match_all('/#[0-9a-f]{3,8}\b/i', $css, $hex);
-        $definitions = preg_match_all('/--reviews-[a-z-]+:\s*#[0-9a-f]{3,8}/i', $css);
-        $this->assertSame(count($hex[0]), $definitions, 'A colour is used directly rather than through a --reviews- variable.');
+        foreach (preg_split('/\R/', $css) as $line) {
+            if (preg_match('/#[0-9a-f]{3,8}\b/i', $line)) {
+                $this->assertMatchesRegularExpression('/^\s*--reviews-[a-z-]+:/', $line, 'A colour is used directly rather than through a --reviews- variable.');
+            }
+        }
+
+        // No dark mode of its own: it follows the site's text colour.
+        $this->assertStringNotContainsString('prefers-color-scheme', $css);
 
         // Nothing outranks the site's own CSS.
         $this->assertStringNotContainsString('!important;', str_replace('transition: none !important;', '', $css));
