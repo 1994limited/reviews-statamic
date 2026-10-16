@@ -65,7 +65,9 @@ class Photos
             }
 
             $path = $directory.'/'.$review->id.'/'.Str::lower(Str::random(16)).'.jpg';
-            Storage::disk($disk)->put($path, $contents);
+            if (! Storage::disk($disk)->put($path, $contents)) {
+                continue;
+            }
 
             $review->photos[] = ['disk' => $disk, 'path' => $path];
         }
@@ -139,11 +141,21 @@ class Photos
                 }
 
                 $path = ltrim($folder.'/'.$review->id.'-'.($i + 1).'-'.Str::lower(Str::random(6)).'.jpg', '/');
-                $container->disk()->put($path, $contents);
 
-                $asset = Asset::make()->container($container->handle())->path($path);
-                $asset->set('alt', __('reviews::messages.photo_alt', ['name' => Reviews::displayName($review->name)]));
-                $asset->save();
+                if (! $container->disk()->put($path, $contents)) {
+                    return $photo;
+                }
+
+                try {
+                    $asset = Asset::make()->container($container->handle())->path($path);
+                    $asset->set('alt', __('reviews::messages.photo_alt', ['name' => Reviews::displayName($review->name)]));
+                    $asset->save();
+                } catch (Throwable $e) {
+                    // Don't leave a public copy nothing knows about.
+                    $container->disk()->delete($path);
+
+                    throw $e;
+                }
 
                 $done['created'][] = ['asset' => $asset->id()];
                 $done['remove'][] = $photo;
@@ -185,7 +197,10 @@ class Photos
 
             try {
                 $path = $directory.'/'.$review->id.'/'.Str::lower(Str::random(16)).'.jpg';
-                Storage::disk($disk)->put($path, $asset->contents());
+
+                if (! Storage::disk($disk)->put($path, $asset->contents())) {
+                    return $photo;
+                }
 
                 $copy = ['disk' => $disk, 'path' => $path];
                 $done['created'][] = $copy;

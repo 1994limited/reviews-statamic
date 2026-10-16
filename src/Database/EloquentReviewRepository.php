@@ -121,6 +121,9 @@ class EloquentReviewRepository implements ReviewRepository
     {
         try {
             $this->connection()->transaction(function () use ($review, $voter) {
+                // The review's row first, then the vote: the order save() takes
+                // them in, so the two can't wait on each other.
+                ReviewModel::query()->whereKey($review->id)->lockForUpdate()->first();
                 VoteModel::query()->create(['review_id' => $review->id, 'voter' => $voter, 'created_at' => now()]);
                 ReviewModel::query()->whereKey($review->id)->increment('helpful');
             });

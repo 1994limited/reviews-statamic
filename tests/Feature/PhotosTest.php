@@ -9,6 +9,7 @@ use NineteenNinetyFour\Reviews\Photos;
 use NineteenNinetyFour\Reviews\Review;
 use NineteenNinetyFour\Reviews\ReviewQuery;
 use NineteenNinetyFour\Reviews\Reviews;
+use NineteenNinetyFour\Reviews\ReviewStatus;
 use NineteenNinetyFour\Reviews\Stache\StacheReviewRepository;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -142,6 +143,29 @@ class PhotosTest extends TestCase
         // The private photo is still there, and nothing was left public.
         Storage::disk('local')->assertExists($pending);
         $this->assertSame([], Storage::disk('assets')->allFiles('reviews'));
+
+        // And the review is as it was, so approving can be tried again.
+        $this->assertSame(ReviewStatus::Pending, $review->status);
+        $this->assertNull($review->approvedAt);
+        $this->assertSame($pending, $review->photos[0]['path']);
+    }
+
+    #[Test]
+    public function a_photo_that_cant_be_written_public_stays_private(): void
+    {
+        $this->post('/!/reviews/submit', $this->submission(['photos' => [UploadedFile::fake()->image('a.jpg')]]));
+        $review = $this->submitted();
+        $pending = $review->photos[0];
+
+        // The asset container's disk refuses writes.
+        $disk = \Mockery::mock(Storage::disk('assets'))->makePartial();
+        $disk->shouldReceive('put')->andReturn(false);
+        Storage::set('assets', $disk);
+
+        $this->reviews()->approve($review);
+
+        $this->assertSame([$pending], $this->reviews()->find($review->id)->photos);
+        Storage::disk('local')->assertExists($pending['path']);
     }
 
     #[Test]

@@ -2,6 +2,7 @@
 
 namespace NineteenNinetyFour\Reviews;
 
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -89,16 +90,22 @@ class Submissions
         // One review per person per entry, even when two arrive at once.
         $identity = $user ? 'user:'.$user->id() : 'email:'.mb_strtolower((string) $data['email']);
 
-        return Cache::lock('reviews:submit:'.sha1($entryId.'|'.$identity), 10)->block(5, function () use ($user, $entryId, $orders, $data) {
-            $existing = $this->reviews->existing($entryId, $user, $user ? null : $data['email']);
+        try {
+            return Cache::lock('reviews:submit:'.sha1($entryId.'|'.$identity), 60)->block(10, function () use ($user, $entryId, $orders, $data) {
+                $existing = $this->reviews->existing($entryId, $user, $user ? null : $data['email']);
 
-            if ($existing && ! $user) {
-                // Thanked as a new review would be, and nothing kept.
-                throw new DuplicateReview;
-            }
+                if ($existing && ! $user) {
+                    // Thanked as a new review would be, and nothing kept.
+                    throw new DuplicateReview;
+                }
 
-            return $this->store($existing, $user, $entryId, $orders, $data);
-        });
+                return $this->store($existing, $user, $entryId, $orders, $data);
+            });
+        } catch (LockTimeoutException) {
+            // The same person's review is being saved right now: this one is
+            // a repeat, and answered as one.
+            throw new DuplicateReview;
+        }
     }
 
     /**

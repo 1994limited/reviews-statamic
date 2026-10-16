@@ -4,6 +4,7 @@ namespace NineteenNinetyFour\Reviews;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use NineteenNinetyFour\Reviews\Contracts\ReviewRepository;
 use NineteenNinetyFour\Reviews\Events\ReviewApproved;
 use NineteenNinetyFour\Reviews\Events\ReviewDeleted;
@@ -154,15 +155,16 @@ class Reviews
 
     public function forgetSummary(string $entry): void
     {
-        $key = 'reviews:summary-version:'.sha1($entry);
-
-        Cache::add($key, 0);
-        Cache::increment($key);
+        // A new random version, not a count: counting up isn't atomic on
+        // every cache store, and two changes must never share a version.
+        Cache::forever('reviews:summary-version:'.sha1($entry), Str::random(16));
     }
 
-    protected function summaryVersion(string $entry): int
+    protected function summaryVersion(string $entry): string
     {
-        return (int) Cache::get('reviews:summary-version:'.sha1($entry), 0);
+        $version = Cache::get('reviews:summary-version:'.sha1($entry));
+
+        return is_string($version) ? $version : '0';
     }
 
     /*
@@ -239,20 +241,13 @@ class Reviews
         }
 
         $photos = app(Photos::class);
+        $before = $this->moderationState($review);
         $done = $photos->publish($review);
 
         $review->status = ReviewStatus::Approved;
         $review->approvedAt = CarbonImmutable::now()->startOfSecond();
 
-        try {
-            $this->save($review);
-        } catch (Throwable $e) {
-            $photos->undo($done);
-
-            throw $e;
-        }
-
-        $photos->finish($done);
+        $this->saveMoving($review, $photos, $done, $before);
 
         ReviewApproved::dispatch($review);
     }
@@ -262,6 +257,7 @@ class Reviews
         $status = $status === ReviewStatus::Spam ? ReviewStatus::Spam : ReviewStatus::Rejected;
 
         $photos = app(Photos::class);
+        $before = $this->moderationState($review);
         $done = $photos->unpublish($review);
 
         $review->status = $status;
@@ -271,7 +267,7 @@ class Reviews
             $review->note = trim($note) === '' ? null : trim($note);
         }
 
-        $this->saveMoving($review, $photos, $done);
+        $this->saveMoving($review, $photos, $done, $before);
 
         ReviewRejected::dispatch($review);
     }
@@ -281,18 +277,39 @@ class Reviews
      * removed once it's saved, and the new ones if it can't be.
      *
      * @param  array{created: array<int, array<string, string>>, remove: array<int, array<string, string>>}  $done
+     * @param  array<string, mixed>  $before
      */
-    protected function saveMoving(Review $review, Photos $photos, array $done): void
+    protected function saveMoving(Review $review, Photos $photos, array $done, array $before): void
     {
         try {
             $this->save($review);
         } catch (Throwable $e) {
             $photos->undo($done);
 
+            // As it was, so it can be tried again.
+            foreach ($before as $property => $value) {
+                $review->{$property} = $value;
+            }
+
             throw $e;
         }
 
         $photos->finish($done);
+    }
+
+    /**
+     * What moderating a review changes, to put back if it can't be saved.
+     *
+     * @return array<string, mixed>
+     */
+    protected function moderationState(Review $review): array
+    {
+        return [
+            'status' => $review->status,
+            'approvedAt' => $review->approvedAt,
+            'note' => $review->note,
+            'photos' => $review->photos,
+        ];
     }
 
     public function spam(Review $review): void
@@ -306,12 +323,13 @@ class Reviews
     public function hold(Review $review): void
     {
         $photos = app(Photos::class);
+        $before = $this->moderationState($review);
         $done = $photos->unpublish($review);
 
         $review->status = ReviewStatus::Pending;
         $review->approvedAt = null;
 
-        $this->saveMoving($review, $photos, $done);
+        $this->saveMoving($review, $photos, $done, $before);
     }
 
     /**
