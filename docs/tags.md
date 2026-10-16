@@ -97,7 +97,7 @@ Review schema for the entry. Parameters: `type`, `id`, `reviews`. See [Templates
 
 ## `{{ reviews:schema_data }}`
 
-The rating and reviews from the review schema as JSON, without a script tag, to add to schema of your own or an SEO addon's. Parameters: `format="properties"`, `only="aggregate"`, `reviews`. See [Templates](templates.md#with-an-seo-addon).
+The rating and reviews from the review schema as JSON, without a script tag, to add to schema of your own or an SEO addon's. Parameters: `format="properties"`, `only="aggregate"`, `reviews`. See [Review schema and SEO addons](seo.md).
 
 ## `{{ reviews:display }}`, `display_summary`, `display_list`, `display_form`
 

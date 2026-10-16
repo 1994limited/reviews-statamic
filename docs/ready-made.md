@@ -23,9 +23,15 @@ Don't want to write the markup and styles yourself? Reviews comes with a finishe
 
 </details>
 
+![The ready-made reviews section on a bookshop's page: the average and star breakdown beside the reviews](images/ready-made.png)
+
 It works without JavaScript and on statically cached pages (the form is in `{{ nocache }}` already), is usable by keyboard and screen readers, and fits phones.
 
 The styles are built to match your site rather than bring a look of their own: they take your site's font, size and text colour, work out the borders, muted text and empty stars from that text colour (so dark sites work too), and leave anything you've styled yourself alone. If that's not quite right, every colour, size and gap is a CSS variable you can set.
+
+| On a dark page, unchanged | The form |
+| --- | --- |
+| ![The same section on a dark page: its colours follow the text](images/ready-made-dark.png) | ![The ready-made form, with the star picker](images/ready-made-form.png) |
 
 ## The tags
 

@@ -303,55 +303,7 @@ It has the entry's name and address, its average rating and number of reviews, a
 
 ### With an SEO addon
 
-If an SEO addon prints schema for your entries too, search engines read the two blocks as two separate things unless they're joined. There are two ways.
-
-**Join them with `@id`.** Give `{{ reviews:schema }}` the `@id` your SEO addon uses for the entry, and search engines merge the rating into it:
-
-```antlers
-{{ reviews:schema id="{{ permalink }}#product" }}
-```
-
-<details>
-<summary>Blade</summary>
-
-```blade
-<s:reviews:schema :id="$permalink.'#product'" />
-```
-
-</details>
-
-**Or put the rating in the SEO addon's own schema.** `{{ reviews:schema_data }}` is the rating and reviews alone, as JSON, without a script tag. With `format="properties"`, it's the properties without their braces, each ending in a comma (or nothing at all before there are reviews), to go straight after a `{`.
-
-[SEO Pro](https://statamic.com/addons/statamic/seo-pro), for example, has a **JSON-LD Schema** field (in a collection's section defaults, or on each entry) that's read as Antlers. Allow the tag in `config/statamic/antlers.php`:
-
-```php
-'allowedContentTags' => [
-    '@default',
-    'reviews:schema_data*',
-],
-```
-
-(The `*` is needed even for the one tag.) Then, in the products collection's JSON-LD Schema field:
-
-```json
-{
-    {{ reviews:schema_data format="properties" }}
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": "{{ title }}",
-    "url": "{{ permalink }}"
-}
-```
-
-The rating and latest reviews go into SEO Pro's own Product, and the schema stays valid for products without reviews yet. Leave out `{{ reviews:schema }}` on those pages, so the rating isn't there twice.
-
-| Parameter | |
-| --- | --- |
-| `format="properties"` | The properties without braces, each ending in a comma. |
-| `only="aggregate"` | The AggregateRating alone (as an object, or with `format="properties"` as `"aggregateRating": {…},`). |
-| `reviews="0"` | Without the reviews. |
-
-In PHP: `app(\NineteenNinetyFour\Reviews\Schema::class)->parts($entry)` returns the same as an array, for addons that take schema from code.
+If an SEO addon prints schema for your entries too, join the two so search engines read them as one thing: see [Review schema and SEO addons](seo.md), with steps for SEO Pro.
 
 Google shows stars only for some types, and not for reviews a business publishes about itself (a `LocalBusiness` or `Organization` reviewing itself on its own site). Product, book, course and recipe reviews are fine.
 

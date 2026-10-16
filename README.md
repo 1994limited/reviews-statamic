@@ -275,6 +275,7 @@ Everything else is in [the documentation](docs/README.md):
 
 - [Installation](docs/installation.md), [settings](docs/configuration.md) and [storage drivers](docs/drivers.md)
 - [Ready-made reviews](docs/ready-made.md) and their styles, [templates](docs/templates.md), [tags](docs/tags.md) and [the demo shop](docs/demo.md)
+- [Review schema and SEO addons](docs/seo.md), including SEO Pro
 - [Spam](docs/spam.md), [photos](docs/photos.md) and [static caching](docs/static-caching.md)
 - [Cargo](docs/cargo.md): verified purchases, buyers only and review requests
 - [Moderation](docs/moderation.md), [emails](docs/emails.md) and [privacy](docs/privacy.md)
