@@ -26,9 +26,17 @@ The average, the count, how many of each star, and each criterion's average, cac
 
 Newest, highest, lowest or most helpful; by rating, verified purchases or photos. "Was this helpful?" votes.
 
+## Ready-made, if you want it
+
+Two tags give you a finished reviews section: the average and star breakdown, the reviews with sorting, pages and "helpful" buttons, and the form. Its styles take your site's own fonts and colours and follow its dark mode, and every colour, size and gap is a CSS variable you can change. Or publish the views and stylesheet and make them yours.
+
 ## Review schema
 
 JSON-LD with the average rating and latest reviews, for star ratings in search results: Product, Book, Course, Recipe, or any schema.org type.
+
+## Works with SEO Pro
+
+Already printing schema with an SEO addon? Add the rating and reviews to its own JSON-LD instead of a second block, so search engines see one product. Step-by-step for SEO Pro, and the same approach for others.
 
 ## Spam protection without puzzles
 
@@ -50,9 +58,9 @@ With [Cargo](https://builtwithcargo.dev): verified purchase badges, reviews from
 
 No IP addresses kept. Export or forget someone's reviews with one command.
 
-## Your markup
+## Or your own markup
 
-Works without JavaScript, and on statically cached pages. Antlers or Blade: every example has both.
+Every part is a tag, for markup of your own. Works without JavaScript, and on statically cached pages. Antlers or Blade: every example has both.
 
 ## Requirements
 
