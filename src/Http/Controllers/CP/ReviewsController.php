@@ -83,7 +83,9 @@ class ReviewsController extends CpController
         $replier = $review->replyBy ? User::find($review->replyBy) : null;
 
         return Inertia::render('reviews::Show', [
-            'review' => $this->row($review) + [
+            // The page's own details win over the list row's (its photos,
+            // rather than how many there are).
+            'review' => array_merge($this->row($review), [
                 'email' => $review->email,
                 'user' => $reviewer ? ['name' => $reviewer->name() ?: $reviewer->email(), 'url' => $reviewer->editUrl()] : null,
                 'order' => $review->order,
@@ -103,7 +105,7 @@ class ReviewsController extends CpController
                 'updated_at' => $review->updatedAt?->toIso8601String(),
                 'entry_edit_url' => $entry?->editUrl(),
                 'entry_reviews_url' => cp_route('reviews.index', ['entry' => $review->entry, 'status' => 'all']),
-            ],
+            ]),
             'statuses' => collect(ReviewStatus::cases())->map(fn ($s) => ['value' => $s->value, 'label' => $s->label()])->all(),
             'can' => $this->can($user),
             'urls' => [

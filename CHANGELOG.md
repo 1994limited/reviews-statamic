@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.2 (2026-10-18)
+
+### Fixed
+- A review's page in the Control Panel shows its photos again: they were left out.
+
 ## 1.1.1 (2026-10-16)
 
 ### Fixed

@@ -223,4 +223,17 @@ class ControlPanelTest extends TestCase
         $this->assertSame(1, $preload['pending']);
         $this->assertNull($field->fieldtype()->process('anything'));
     }
+
+    #[Test]
+    public function a_review_s_page_shows_its_photos(): void
+    {
+        $review = $this->review(['photos' => [['disk' => 'local', 'path' => 'reviews/pending/x/a.jpg']], 'status' => ReviewStatus::Pending]);
+
+        $this->actingAs($this->editor())
+            ->get(cp_route('reviews.show', $review->id))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('review.photos', 1)
+                ->where('review.photos.0.pending', true)
+                ->etc());
+    }
 }
