@@ -21,6 +21,7 @@ export default {
         search: { type: String, default: null },
         rating: { type: Number, default: null },
         entry: { type: Object, default: null },
+        site: { type: Object, default: null },
         pagination: { type: Object, required: true },
         can: { type: Object, required: true },
         urls: { type: Object, required: true },
@@ -48,7 +49,7 @@ export default {
         },
 
         filtered() {
-            return Boolean(this.search || this.rating || this.entry);
+            return Boolean(this.search || this.rating || this.entry || this.site);
         },
     },
 
@@ -73,6 +74,7 @@ export default {
             if (this.query) params.search = this.query;
             if (this.stars !== 'all') params.rating = this.stars;
             if (this.entry) params.entry = this.entry.id;
+            if (this.site) params.site = this.site.handle;
 
             return { ...params, ...overrides };
         },
@@ -141,7 +143,8 @@ export default {
         <div v-if="entry" class="mb-3 flex items-center gap-2 text-sm">
             <span class="text-gray-600 dark:text-gray-400!">{{ __('Reviews of') }}</span>
             <span class="font-medium">{{ entry.title }}</span>
-            <Link :href="url({ entry: null, page: null })" class="text-blue-700 hover:underline! dark:text-blue-400!">{{ __('Show all') }}</Link>
+            <span v-if="site" class="text-gray-600 dark:text-gray-400!">{{ __('on :site', { site: site.name }) }}</span>
+            <Link :href="url({ entry: null, site: null, page: null })" class="text-blue-700 hover:underline! dark:text-blue-400!">{{ __('Show all') }}</Link>
         </div>
 
         <div v-if="selected.length" class="mb-3 flex flex-wrap items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm dark:bg-gray-800!">

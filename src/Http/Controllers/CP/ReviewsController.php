@@ -38,6 +38,7 @@ class ReviewsController extends CpController
         $search = is_string($request->query('search')) ? mb_substr(trim($request->query('search')), 0, 100) : null;
         $rating = is_numeric($request->query('rating')) ? Review::score($request->query('rating')) : null;
         $entry = is_string($request->query('entry')) && preg_match('/^[\w-]{1,64}$/', $request->query('entry')) ? $request->query('entry') : null;
+        $site = is_string($request->query('site')) ? Site::get($request->query('site')) : null;
         $page = max(1, (int) $request->query('page', 1));
 
         $query = ReviewQuery::make()
@@ -45,6 +46,7 @@ class ReviewsController extends CpController
             ->search($search)
             ->rating($rating)
             ->entry($entry)
+            ->site($site?->handle())
             ->sort($status === 'pending' ? 'oldest' : 'newest');
 
         $paginator = $this->reviews->repository()->paginate($query, 25, $page);
@@ -57,6 +59,7 @@ class ReviewsController extends CpController
             'statuses' => collect(ReviewStatus::cases())->map(fn ($s) => ['value' => $s->value, 'label' => $s->label()])->all(),
             'search' => $search,
             'rating' => $rating,
+            'site' => $site ? ['handle' => $site->handle(), 'name' => $site->name()] : null,
             'entry' => $entry ? ['id' => $entry, 'title' => (string) ($this->reviews->entry($entry)?->get('title') ?? $entry)] : null,
             'pagination' => [
                 'page' => $paginator->currentPage(),

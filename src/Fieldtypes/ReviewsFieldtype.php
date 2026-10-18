@@ -32,8 +32,10 @@ class ReviewsFieldtype extends Fieldtype
 
         $reviews = app(Reviews::class);
         $id = $reviews->entryId($entry);
-        $summary = $reviews->summary($id);
-        $pending = $reviews->repository()->count(ReviewQuery::make()->entry($id)->status('pending'));
+        // With separate sites, this localisation's own.
+        $site = $reviews->siteScope($entry->locale());
+        $summary = $reviews->summary($id, $site);
+        $pending = $reviews->repository()->count(ReviewQuery::make()->entry($id)->site($site)->status('pending'));
 
         return [
             'exists' => true,
@@ -41,8 +43,8 @@ class ReviewsFieldtype extends Fieldtype
             'average' => $summary->average() !== null ? round($summary->average(), 1) : null,
             'breakdown' => $summary->stars,
             'pending' => $pending,
-            'url' => cp_route('reviews.index', ['entry' => $id, 'status' => 'all']),
-            'pending_url' => cp_route('reviews.index', ['entry' => $id, 'status' => 'pending']),
+            'url' => cp_route('reviews.index', array_filter(['entry' => $id, 'site' => $site, 'status' => 'all'])),
+            'pending_url' => cp_route('reviews.index', array_filter(['entry' => $id, 'site' => $site, 'status' => 'pending'])),
         ];
     }
 

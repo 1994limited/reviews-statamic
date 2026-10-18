@@ -23,6 +23,10 @@ php artisan vendor:publish --tag=reviews-config
 | Photos | Allow photos, photos per review, asset container | [Photos](photos.md). Off by default. |
 | Cargo | Review requests | [Cargo](cargo.md). Off by default. |
 
+### Moving to separate sites
+
+Before 1.2, the review form recorded every review against your default site, whichever site it was written on. If you switch an existing multi-site install to Separate, those older reviews show on the default site only; reviews written from 1.2 on are recorded against the site of the entry they're about. Switching back to Shared shows them everywhere again: nothing is lost either way.
+
 Reviews are never published, held back or hidden because of their star rating: there's deliberately no setting for it ([Privacy](privacy.md#fair-reviews)).
 
 ## `config/reviews.php`

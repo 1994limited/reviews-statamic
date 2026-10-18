@@ -7,8 +7,10 @@ use NineteenNinetyFour\Reviews\ReviewStatus;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use NineteenNinetyFour\Reviews\Widgets\PendingReviews;
 use PHPUnit\Framework\Attributes\Test;
+use Statamic\Facades\Collection;
 use Statamic\Facades\Entry;
 use Statamic\Facades\Permission;
+use Statamic\Facades\Site;
 use Statamic\Fields\Field;
 
 class ControlPanelTest extends TestCase
@@ -222,5 +224,35 @@ class ControlPanelTest extends TestCase
         $this->assertEquals(4, $preload['average']);
         $this->assertSame(1, $preload['pending']);
         $this->assertNull($field->fieldtype()->process('anything'));
+    }
+
+    #[Test]
+    public function with_separate_sites_the_fieldtype_and_list_show_one_site(): void
+    {
+        config(['statamic.system.multisite' => true, 'reviews.sites' => 'separate']);
+        Site::setSites([
+            'default' => ['name' => 'English', 'url' => '/', 'locale' => 'en_GB'],
+            'french' => ['name' => 'French', 'url' => '/fr/', 'locale' => 'fr_FR'],
+        ])->save();
+        Collection::find('products')->sites(['default', 'french'])->save();
+        Entry::find('book')->makeLocalization('french')->id('livre')->slug('le-long-champ')->save();
+
+        $this->review(['rating' => 4]);
+        $this->review(['rating' => 2, 'site' => 'french']);
+
+        $field = new Field('reviews', ['type' => 'reviews']);
+        $field->setParent(Entry::find('livre'));
+        $preload = $field->fieldtype()->preload();
+
+        $this->assertSame(1, $preload['count']);
+        $this->assertEquals(2, $preload['average']);
+        $this->assertStringContainsString('site=french', $preload['url']);
+
+        $this->actingAs($this->editor(['view reviews']))
+            ->inertia(cp_route('reviews.index', ['status' => 'all', 'site' => 'french']))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('reviews', 1)
+                ->where('site.handle', 'french')
+                ->etc());
     }
 }
