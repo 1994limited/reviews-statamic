@@ -15,6 +15,7 @@ use NineteenNinetyFour\Reviews\Commands\ExportReviews;
 use NineteenNinetyFour\Reviews\Commands\ForgetReviews;
 use NineteenNinetyFour\Reviews\Commands\ImportReviews;
 use NineteenNinetyFour\Reviews\Commands\SendRequests;
+use NineteenNinetyFour\Reviews\Commands\SyncReviews;
 use NineteenNinetyFour\Reviews\Commands\TransferReviews;
 use NineteenNinetyFour\Reviews\Contracts\RequestLog;
 use NineteenNinetyFour\Reviews\Contracts\ReviewRepository;
@@ -52,6 +53,7 @@ class ServiceProvider extends AddonServiceProvider
         ImportReviews::class,
         ForgetReviews::class,
         SendRequests::class,
+        SyncReviews::class,
     ];
 
     protected $fieldtypes = [
@@ -109,6 +111,9 @@ class ServiceProvider extends AddonServiceProvider
         $this->app->singleton(Presenter::class);
         $this->app->singleton(Schema::class);
         $this->app->singleton(Submissions::class);
+        $this->app->singleton(Import\Imports::class);
+        $this->app->singleton(Sync\SourceStore::class);
+        $this->app->singleton(Sync\Sync::class);
     }
 
     /**
@@ -171,6 +176,7 @@ class ServiceProvider extends AddonServiceProvider
                 ->can('view reviews')
                 ->children(fn () => [
                     Nav::item(__('reviews::messages.cp.import'))->route('reviews.import')->can('import reviews'),
+                    Nav::item(__('reviews::messages.cp.sync'))->route('reviews.sources')->can('import reviews'),
                 ]);
         });
     }
@@ -206,6 +212,7 @@ class ServiceProvider extends AddonServiceProvider
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
             $schedule->command('reviews:send-requests')->hourly()->withoutOverlapping();
+            $schedule->command('reviews:sync')->hourly()->withoutOverlapping();
         });
     }
 }

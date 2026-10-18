@@ -22,6 +22,9 @@ return [
             // Which orders have been sent a review request, and who asked
             // not to be sent any more (with Cargo).
             'requests' => storage_path('reviews-requests.json'),
+            // The platforms reviews are synced from, with their keys (secret
+            // ones encrypted with your app key).
+            'sources' => storage_path('reviews-sources.yaml'),
         ],
 
         'database' => [
@@ -31,6 +34,7 @@ return [
                 'reviews' => 'reviews',
                 'votes' => 'review_votes',
                 'requests' => 'review_requests',
+                'sources' => 'review_sources',
             ],
         ],
     ],

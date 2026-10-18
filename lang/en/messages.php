@@ -126,6 +126,12 @@ return [
         'permission' => 'Import and sync reviews',
     ],
 
+    'sync' => [
+        'name' => 'name',
+        'unknown_platform' => 'Reviews doesn’t sync from that platform.',
+        'cant_count' => ':platform’s reviews can’t count towards your ratings: search engines don’t allow marking up reviews from other websites.',
+    ],
+
     'cp' => [
         'reviews' => 'Reviews',
         'pending_widget' => 'Reviews waiting',

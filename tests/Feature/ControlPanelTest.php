@@ -6,6 +6,8 @@ use Illuminate\Http\UploadedFile;
 use Inertia\Testing\AssertableInertia;
 use NineteenNinetyFour\Reviews\ReviewQuery;
 use NineteenNinetyFour\Reviews\ReviewStatus;
+use NineteenNinetyFour\Reviews\Sync\Sync;
+use NineteenNinetyFour\Reviews\Tests\FakeClient;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use NineteenNinetyFour\Reviews\Widgets\PendingReviews;
 use PHPUnit\Framework\Attributes\Test;
@@ -291,5 +293,41 @@ class ControlPanelTest extends TestCase
 
         // The file's gone: it can't be imported twice from here.
         $this->post(cp_route('reviews.import.run'), ['token' => $state['token']], ['X-Inertia' => 'true'])->assertNotFound();
+    }
+
+    #[Test]
+    public function sources_are_added_checked_synced_and_removed(): void
+    {
+        @unlink(storage_path('reviews-sources.yaml'));
+        $this->actingAs($this->editor(['view reviews', 'import reviews']));
+        $sync = app(Sync::class);
+        $sync->client = new FakeClient([['reviews' => [['id' => 1, 'rating' => 5, 'product_handle' => 'the-long-field', 'body' => 'Synced', 'reviewer' => ['name' => 'Hal']]]]]);
+
+        $this->get(cp_route('reviews.sources'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->component('reviews::Sources')->has('platforms', 5)->etc());
+        $this->get(cp_route('reviews.sources.create', ['type' => 'judgeme']))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->component('reviews::Source')->has('platform.fields', 2)->etc());
+
+        // Missing its token.
+        $this->post(cp_route('reviews.sources.store'), ['type' => 'judgeme', 'name' => 'Judge.me', 'settings' => ['shop_domain' => 'x'], 'enabled' => true])
+            ->assertSessionHasErrors('settings.api_token');
+
+        $this->post(cp_route('reviews.sources.store'), ['type' => 'judgeme', 'name' => 'Judge.me', 'settings' => ['shop_domain' => 'x', 'api_token' => 'secret'], 'enabled' => true])
+            ->assertRedirect(cp_route('reviews.sources'));
+
+        $source = array_values($sync->all())[0];
+
+        // The secret isn't sent back to the browser, and an empty one keeps what's saved.
+        $this->get(cp_route('reviews.sources.edit', $source->id))->assertInertia(fn (AssertableInertia $page) => $page->where('source.settings.api_token', '')->where('source.saved_secrets', ['api_token'])->etc());
+        $this->patch(cp_route('reviews.sources.update', $source->id), ['name' => 'Renamed', 'settings' => ['shop_domain' => 'x', 'api_token' => ''], 'enabled' => true, 'frequency' => 6]);
+        $this->assertSame('secret', $sync->find($source->id)->settings['api_token']);
+        $this->assertSame('Renamed', $sync->find($source->id)->name);
+
+        $this->post(cp_route('reviews.sources.run', $source->id))->assertRedirect(cp_route('reviews.sources'));
+        $this->assertSame(1, $this->reviews()->repository()->count(ReviewQuery::make()));
+
+        $this->delete(cp_route('reviews.sources.destroy', $source->id));
+        $this->assertSame([], $sync->all());
+        $this->assertSame(1, $this->reviews()->repository()->count(ReviewQuery::make()));
+
+        @unlink(storage_path('reviews-sources.yaml'));
     }
 }
