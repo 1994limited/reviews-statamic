@@ -59,4 +59,6 @@ Reviews are never published, held back or hidden because of their star rating: t
 | `notifications.to`, `approved`, `replied` | `[]`, false, true | As the settings. |
 | `cargo.*` | | [Cargo](cargo.md). |
 | `deleted_users` | `anonymise` | When a user is deleted: `anonymise` their reviews or `delete` them. |
-| `schedule` | true | Schedule `reviews:send-requests` hourly. False if you schedule it yourself. |
+| `schedule` | true | Schedule `reviews:send-requests` and `reviews:sync` hourly. False if you schedule them yourself. |
+| `drivers.file.sources` | `storage/reviews-sources.yaml` | Where the file driver keeps [sync sources](import-and-sync.md#syncing). |
+| `sites` | `shared` | `shared` or `separate`: Reviews across sites, as the settings. |

@@ -77,6 +77,9 @@ An entry's ID here is the original's: for a translated entry, use `$reviews->ent
 | `reviews:export {email} --output=file.json` | [Privacy](privacy.md) |
 | `reviews:forget {email} [--delete]` | [Privacy](privacy.md) |
 | `reviews:send-requests [--dry-run]` | [Cargo](cargo.md#review-requests) |
+| `reviews:import {file} [--dry-run]` | [Import and sync](import-and-sync.md) |
+| `reviews:export-all {file}` | [Import and sync](import-and-sync.md#moving-between-sites) |
+| `reviews:sync [{id}] [--force] [--all]` | [Import and sync](import-and-sync.md#syncing) |
 
 ## HTTP endpoints
 

@@ -11,7 +11,7 @@ Reviews collects reviews and star ratings on your own site. Visitors write them 
 ## Building the front end
 
 4. [Ready-made reviews](ready-made.md): a finished reviews section and default styles in two tags, and changing how it looks with CSS variables. The quickest start.
-5. [Templates](templates.md): the average, the reviews, the form and review schema in your own markup, .
+5. [Templates](templates.md): the average, the reviews, the form and review schema in your own markup.
 6. [Review schema and SEO addons](seo.md): star ratings in search results, and joining Reviews' schema to an SEO addon's, with steps for SEO Pro.
 7. [Tags](tags.md): every `{{ reviews:* }}` tag, its parameters and variables.
 8. [Spam](spam.md): the honeypot, the time trap, captchas (Turnstile, hCaptcha, reCAPTCHA) and rate limits.
@@ -25,11 +25,12 @@ Reviews collects reviews and star ratings on your own site. Visitors write them 
 13. [Moderation](moderation.md): the Control Panel, approving, replying, permissions, the dashboard widget and the entry field.
 14. [Emails](emails.md): to editors about new reviews, and to reviewers.
 15. [Privacy](privacy.md): what's kept, exporting and forgetting someone's reviews, and fair-review law.
+16. [Import and sync](import-and-sync.md): reviews from Yotpo, Judge.me, REVIEWS.io, Shopify, Trustpilot, WooCommerce and Feefo, once or on a schedule.
 
 ## Reference
 
-16. [Events and PHP API](php-api.md): events, the `Reviews` service, and querying reviews.
-17. [Troubleshooting](troubleshooting.md): common problems and fixes.
+17. [Events and PHP API](php-api.md): events, the `Reviews` service, and querying reviews.
+18. [Troubleshooting](troubleshooting.md): common problems and fixes.
 
 ## Requirements
 

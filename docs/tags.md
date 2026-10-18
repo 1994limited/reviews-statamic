@@ -34,6 +34,7 @@ Each review:
 | `helpful` | How many found it helpful. |
 | `photos` | Approved photos: `url`, `id`, `alt`, `width`, `height`. |
 | `is_mine` | Written by the signed-in visitor. |
+| `is_own`, `source`, `source_url` | Written on this site; or, for an [imported](import-and-sync.md) review, the platform's name ("Trustpilot", or empty when it's not known) and the review's page there. |
 
 With `paginate` (and `as`): `paginate:total_items`, `total_pages`, `current_page`, `prev_page`, `next_page` and `links` (`page`, `url`, `current`). `no_results` and `total_results` too.
 

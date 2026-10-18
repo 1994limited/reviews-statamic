@@ -2,7 +2,15 @@
 
 ## Unreleased
 
+### Upgrading
+- With the database driver, run `php artisan migrate`: 1.2 adds four columns to `reviews` (where a review came from, and whether it counts) and a `review_sources` table. Existing reviews are your site's own, and count, as before.
+
 ### Added
+- **Import** reviews from another platform's export: Yotpo, Judge.me, REVIEWS.io, Shopify Product Reviews, Trustpilot, WooCommerce, Reviews' own, or any CSV or JSON with a rating column. Reviews → Import shows what would be added first; `php please reviews:import` does the same from the command line. [Import and sync](docs/import-and-sync.md).
+- **Sync** reviews from Feefo, REVIEWS.io, Judge.me, Yotpo and Trustpilot on a schedule: Reviews → Sync, and `php please reviews:sync`, run hourly by the scheduler. Keys are kept encrypted, beside the reviews.
+- Imported and synced reviews show where they came from, get no helpful votes, and don't count towards the average or schema unless you say so (only Feefo allows it for synced reviews), as Google's guidelines ask.
+- `php please reviews:export-all`: every review as a CSV that Reviews for Statamic or Craft imports.
+- A new permission, **Import and sync reviews**.
 - **Reviews across sites.** On a multi-site install, reviews can be shared (the default, as before: an entry has the same reviews on every site) or separate: each site has its own reviews, average and schema, and someone can review the same entry on each. Under Settings, or `sites` in `config/reviews.php`.
 
 ### Fixed

@@ -16,7 +16,7 @@ The file driver suits sites with up to a few thousand reviews. Past that, use th
 
 ## Database
 
-Three tables: `reviews`, `review_votes` ("helpful" votes) and `review_requests` (Cargo's review request emails). Publish the migration and run it:
+Four tables: `reviews`, `review_votes` ("helpful" votes), `review_requests` (Cargo's review request emails) and `review_sources` ([sync sources](import-and-sync.md#syncing)). Publish the migrations and run them:
 
 ```bash
 php artisan vendor:publish --tag=reviews-migrations
