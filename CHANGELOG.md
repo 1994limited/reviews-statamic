@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 (2026-10-18)
 
 ### Upgrading
 - With the database driver, run `php artisan migrate`: 1.2 adds four columns to `reviews` (where a review came from, and whether it counts) and a `review_sources` table. Existing reviews are your site's own, and count, as before.
@@ -17,6 +17,9 @@
 - Reviews now shares its core with [Reviews for Craft](https://github.com/1994limited/reviews-craft): the numbers, stars, names, spam checks, captchas, review schema and the default stylesheet come from the `1994/reviews-core` package, installed with it. Nothing changes on your site; the stylesheet is now at `vendor/1994/reviews-core/resources/css/reviews.css`. Forms drawn before the update (on cached pages, say) still work.
 - A review's site is now the site of the entry it's of. Before, the form recorded every review against the default site, so `site="current"` only worked there. Reviews written before 1.2 keep the default site: see [Moving to separate sites](docs/configuration.md#moving-to-separate-sites) before switching an existing install to Separate.
 - The Reviews field and the Control Panel list can show one site's reviews (`?site=` on the list); with separate sites, the field shows its own site's.
+
+### Deprecated
+- The captcha classes in `NineteenNinetyFour\Reviews\Captcha` (`Turnstile`, `HCaptcha`, `Recaptcha`, `RecaptchaV3`, `SiteverifyCaptcha`): the form uses reviews-core's now. They're kept, working as before, for code that extends them. Custom captchas implementing `Contracts\Captcha` are unchanged.
 
 ## 1.1.2 (2026-10-18)
 

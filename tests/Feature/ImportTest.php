@@ -8,6 +8,7 @@ use NineteenNinetyFour\Reviews\Import\Imports;
 use NineteenNinetyFour\Reviews\Review;
 use NineteenNinetyFour\Reviews\ReviewQuery;
 use NineteenNinetyFour\Reviews\ReviewStatus;
+use NineteenNinetyFour\Reviews\Schema;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades\Entry;
@@ -163,7 +164,7 @@ class ImportTest extends TestCase
             $this->review(['rating' => 1, 'title' => 'Elsewhere '.$n, 'source' => 'trustpilot', 'counted' => false]);
         }
 
-        $data = app(\NineteenNinetyFour\Reviews\Schema::class)->data(Entry::find('book'));
+        $data = app(Schema::class)->data(Entry::find('book'));
 
         $this->assertSame(1, $data['aggregateRating']['reviewCount']);
         $this->assertSame(['Ours'], array_column($data['review'], 'name'));
