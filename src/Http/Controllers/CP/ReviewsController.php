@@ -8,6 +8,8 @@ use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use NineteenNinetyFour\Reviews\Core\Import\Values;
+use NineteenNinetyFour\Reviews\Import\Imports;
 use NineteenNinetyFour\Reviews\Photos;
 use NineteenNinetyFour\Reviews\Review;
 use NineteenNinetyFour\Reviews\ReviewQuery;
@@ -102,6 +104,9 @@ class ReviewsController extends CpController
                 'note' => $review->note,
                 'photos' => $this->photoUrls($review),
                 'site_name' => Site::multiEnabled() ? Site::get((string) $review->site)?->name() : null,
+                'source' => $review->source !== null ? Imports::sourceLabel($review->source) : null,
+                'source_url' => Values::url($review->sourceUrl),
+                'counted' => $review->counted,
                 'approved_at' => $review->approvedAt?->toIso8601String(),
                 'updated_at' => $review->updatedAt?->toIso8601String(),
                 'entry_edit_url' => $entry?->editUrl(),
@@ -257,6 +262,7 @@ class ReviewsController extends CpController
             'excerpt' => $review->body !== null ? mb_strimwidth(preg_replace('/\s+/u', ' ', $review->body) ?? '', 0, 160, '…') : null,
             'name' => $review->name,
             'verified' => $review->verified,
+            'source' => $review->source !== null ? Imports::sourceLabel($review->source) : null,
             'status' => $review->status->value,
             'status_label' => $review->status->label(),
             'has_reply' => $review->reply !== null,
@@ -283,6 +289,13 @@ class ReviewsController extends CpController
                 $asset = $assets->get($photo['asset']);
 
                 return $asset ? ['url' => $asset->url(), 'pending' => false, 'edit_url' => $asset->editUrl()] : null;
+            }
+
+            // An imported review's photo, where the platform has it.
+            if (isset($photo['url'])) {
+                $url = Values::url($photo['url']);
+
+                return $url ? ['url' => $url, 'pending' => false, 'edit_url' => null] : null;
             }
 
             return ['url' => cp_route('reviews.photo', [$review->id, $index]), 'pending' => true, 'edit_url' => null];

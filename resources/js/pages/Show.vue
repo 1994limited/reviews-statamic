@@ -162,6 +162,13 @@ export default {
                             <dt class="text-gray-600 dark:text-gray-400!">{{ __('Order') }}</dt>
                             <dd><a v-if="review.order_url" :href="review.order_url" class="hover:underline!">{{ review.order }}</a><span v-else>{{ review.order }}</span></dd>
                         </div>
+                        <div v-if="review.source">
+                            <dt class="text-gray-600 dark:text-gray-400!">{{ __('From') }}</dt>
+                            <dd>
+                                {{ review.source }}<template v-if="review.source_url"> · <a :href="review.source_url" target="_blank" rel="noopener" class="hover:underline!">{{ __('View') }}</a></template>
+                                <span class="block text-gray-600 dark:text-gray-400!">{{ review.counted ? __('Counts towards the rating') : __('Doesn’t count towards the rating') }}</span>
+                            </dd>
+                        </div>
                         <div>
                             <dt class="text-gray-600 dark:text-gray-400!">{{ __('Written') }}</dt>
                             <dd>{{ date }}<span v-if="review.site_name" class="text-gray-600 dark:text-gray-400!"> · {{ review.site_name }}</span></dd>

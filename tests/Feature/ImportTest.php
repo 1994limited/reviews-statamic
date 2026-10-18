@@ -2,6 +2,7 @@
 
 namespace NineteenNinetyFour\Reviews\Tests\Feature;
 
+use Inertia\Testing\AssertableInertia;
 use NineteenNinetyFour\Reviews\Import\ImportOptions;
 use NineteenNinetyFour\Reviews\Import\Imports;
 use NineteenNinetyFour\Reviews\Review;
@@ -132,5 +133,24 @@ class ImportTest extends TestCase
         $this->assertStringNotContainsString('reviews/helpful', $html);
 
         $this->postJson('/!/reviews/'.$review->id.'/helpful')->assertStatus(422);
+    }
+
+    #[Test]
+    public function the_control_panel_shows_where_it_came_from_and_its_photos(): void
+    {
+        Entry::find('book')->set('sku', 'LF-1')->save();
+        $this->imports()->import($this->imports()->read("Review Id,Review Created (UTC),Review Stars,Review Title,Review Content,Consumer Name,Review URL,Product SKU\ntp1,2026-02-01,4,Nice,Fine,Ivy,https://uk.trustpilot.com/reviews/9,LF-1\n")->reviews, new ImportOptions);
+        $review = $this->all()[0];
+        $review->photos = [['url' => 'https://images.example/p.jpg']];
+        $this->reviews()->repository()->save($review);
+
+        $this->actingAs($this->editor())
+            ->get(cp_route('reviews.show', $review->id))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('review.source', 'Trustpilot')
+                ->where('review.source_url', 'https://uk.trustpilot.com/reviews/9')
+                ->where('review.counted', false)
+                ->where('review.photos.0.url', 'https://images.example/p.jpg')
+                ->etc());
     }
 }

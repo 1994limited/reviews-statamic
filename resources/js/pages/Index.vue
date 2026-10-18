@@ -183,6 +183,7 @@ export default {
                                 <div class="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-gray-600 dark:text-gray-400!">
                                     <span>{{ review.name }}</span>
                                     <span v-if="review.verified" class="text-green-700 dark:text-green-400!">✓ {{ __('Verified purchase') }}</span>
+                                    <span v-if="review.source" class="text-gray-600 dark:text-gray-400!">{{ __('From :platform', { platform: review.source }) }}</span>
                                     <span v-if="review.photos">{{ review.photos === 1 ? __('1 photo') : __(':count photos', { count: review.photos }) }}</span>
                                     <span v-if="review.has_reply">{{ __('Replied') }}</span>
                                 </div>
