@@ -29,6 +29,10 @@ Most review addons copy reviews in from Google, Yotpo or Trustpilot. Reviews col
 | --- | --- | --- | --- |
 | ![Readers' reviews](docs/images/reviews.png) | ![The review form](docs/images/form.png) | ![Content → Reviews](docs/images/cp-reviews.png) | ![One review, with the public reply](docs/images/cp-review.png) |
 
+| Importing an export | Syncing | An imported review |
+| --- | --- | --- |
+| ![An export previewed before importing](docs/images/cp-import.png) | ![The Sync page](docs/images/cp-sync.png) | ![A review from Trustpilot, saying where it came from](docs/images/imported.png) |
+
 The screenshots are from Dog-ear Books, a made-up bookshop built only with the tags in [the docs](docs/README.md). See [the demo shop](docs/demo.md).
 
 ## Requirements
