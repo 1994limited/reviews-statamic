@@ -330,4 +330,17 @@ class ControlPanelTest extends TestCase
 
         @unlink(storage_path('reviews-sources.yaml'));
     }
+
+    #[Test]
+    public function a_review_s_page_shows_its_photos(): void
+    {
+        $review = $this->review(['photos' => [['disk' => 'local', 'path' => 'reviews/pending/x/a.jpg']], 'status' => ReviewStatus::Pending]);
+
+        $this->actingAs($this->editor())
+            ->get(cp_route('reviews.show', $review->id))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('review.photos', 1)
+                ->where('review.photos.0.pending', true)
+                ->etc());
+    }
 }
