@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1 (2026-10-18)
+
+### Fixed
+- An export previewed under Reviews → Import is kept in `storage/framework/reviews-import` until it's imported, or for a day. That folder now has its own `.gitignore`, so the file (people's names and email addresses) can't be committed to your site's repository in the meantime.
+
 ## 1.2.0 (2026-10-18)
 
 ### Upgrading

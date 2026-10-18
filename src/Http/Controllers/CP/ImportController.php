@@ -94,6 +94,13 @@ class ImportController extends CpController
     {
         File::ensureDirectoryExists(dirname($this->path($token)), 0700);
 
+        // Kept out of the site's git repository, which Laravel's own
+        // storage/framework/.gitignore doesn't do for a folder it doesn't know.
+        $ignore = dirname($this->path($token)).'/.gitignore';
+        if (! File::exists($ignore)) {
+            File::put($ignore, "*\n!.gitignore\n");
+        }
+
         foreach ([$this->path($token) => $contents, $this->path($token, 'json') => (string) json_encode($meta)] as $path => $data) {
             File::put($path, $data);
             @chmod($path, 0600);

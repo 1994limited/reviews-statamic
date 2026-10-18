@@ -286,6 +286,7 @@ class ControlPanelTest extends TestCase
         $this->assertSame(1, $state['counts']['matched']);
         $this->assertSame(['handle no-such-book'], $state['counts']['unmatched']);
         $this->assertSame(0, $this->reviews()->repository()->count(ReviewQuery::make()));
+        $this->assertSame("*\n!.gitignore\n", file_get_contents(storage_path('framework/reviews-import/.gitignore')));
 
         // Another user can't import it.
         $this->actingAs($this->user('other@example.com', ['access cp', 'view reviews', 'import reviews']))
