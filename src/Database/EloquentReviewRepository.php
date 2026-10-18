@@ -91,6 +91,7 @@ class EloquentReviewRepository implements ReviewRepository
         $base = ReviewModel::query()
             ->where('entry_id', $entry)
             ->where('status', ReviewStatus::Approved->value)
+            ->where('counted', true)
             ->when($site !== null, fn ($query) => $query->where('site', $site));
 
         $counts = (clone $base)->selectRaw('rating, count(*) as total')->groupBy('rating')->pluck('total', 'rating')->all();
@@ -158,6 +159,12 @@ class EloquentReviewRepository implements ReviewRepository
             ->when($query->withPhotos !== null, fn ($builder) => $builder->where('has_photos', $query->withPhotos))
             ->when($query->user !== null, fn ($builder) => $builder->where('user_id', $query->user))
             ->when($query->email !== null, fn ($builder) => $builder->whereRaw('lower(email) = ?', [$query->email]))
+            ->when($query->counted !== null, fn ($builder) => $builder->where('counted', $query->counted))
+            ->when($query->source === false, fn ($builder) => $builder->whereNull('source'))
+            ->when($query->source === true, fn ($builder) => $builder->whereNotNull('source'))
+            ->when(is_string($query->source), fn ($builder) => $builder->where('source', $query->source))
+            ->when($query->sourceId !== null, fn ($builder) => $builder->where('source_id', $query->sourceId))
+            ->when($query->fingerprint !== null, fn ($builder) => $builder->where('fingerprint', $query->fingerprint))
             ->when($query->except !== null, fn ($builder) => $builder->whereKeyNot($query->except))
             ->when($query->search !== null, function ($builder) use ($query) {
                 $like = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($query->search)).'%';
@@ -211,6 +218,11 @@ class EloquentReviewRepository implements ReviewRepository
             'photos' => $review->photos ?: null,
             'has_photos' => $review->photos !== [],
             'helpful' => max($review->helpful, count($review->voters)),
+            'source' => $review->source,
+            'source_id' => $review->sourceId,
+            'source_url' => $review->sourceUrl,
+            'counted' => $review->counted,
+            'fingerprint' => $review->fingerprint,
             'created_at' => $review->createdAt,
             'updated_at' => $review->updatedAt,
             'approved_at' => $review->approvedAt,
@@ -238,6 +250,11 @@ class EloquentReviewRepository implements ReviewRepository
             'note' => $model->note,
             'photos' => $model->photos,
             'helpful' => $model->helpful,
+            'source' => $model->source,
+            'source_id' => $model->source_id,
+            'source_url' => $model->source_url,
+            'counted' => $model->counted ?? true,
+            'fingerprint' => $model->fingerprint,
             'created_at' => $model->created_at,
             'updated_at' => $model->updated_at,
             'approved_at' => $model->approved_at,

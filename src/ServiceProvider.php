@@ -10,8 +10,10 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use InvalidArgumentException;
+use NineteenNinetyFour\Reviews\Commands\ExportAllReviews;
 use NineteenNinetyFour\Reviews\Commands\ExportReviews;
 use NineteenNinetyFour\Reviews\Commands\ForgetReviews;
+use NineteenNinetyFour\Reviews\Commands\ImportReviews;
 use NineteenNinetyFour\Reviews\Commands\SendRequests;
 use NineteenNinetyFour\Reviews\Commands\TransferReviews;
 use NineteenNinetyFour\Reviews\Contracts\RequestLog;
@@ -46,6 +48,8 @@ class ServiceProvider extends AddonServiceProvider
     protected $commands = [
         TransferReviews::class,
         ExportReviews::class,
+        ExportAllReviews::class,
+        ImportReviews::class,
         ForgetReviews::class,
         SendRequests::class,
     ];

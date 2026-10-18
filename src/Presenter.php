@@ -2,6 +2,8 @@
 
 namespace NineteenNinetyFour\Reviews;
 
+use NineteenNinetyFour\Reviews\Core\Import\Formats;
+use NineteenNinetyFour\Reviews\Core\Import\Values;
 use NineteenNinetyFour\Reviews\Core\Rating\Stars;
 use Statamic\Contracts\Assets\Asset;
 use Statamic\Contracts\Auth\User;
@@ -53,7 +55,17 @@ class Presenter
                 'alt' => e((string) ($asset->get('alt') ?? '')),
                 'width' => $asset->width(),
                 'height' => $asset->height(),
-            ])->all(),
+            ])->merge(
+                // An imported review's photos, where the platform has them.
+                collect($review->photos)
+                    ->map(fn ($photo) => Values::url($photo['url'] ?? null))
+                    ->filter()
+                    ->map(fn (string $url) => ['url' => e($url), 'id' => null, 'alt' => e(__('reviews::messages.photo_alt', ['name' => Reviews::displayName($review->name)])), 'width' => null, 'height' => null])
+            )->values()->all(),
+            'is_own' => $review->isOwn(),
+            // "From Judge.me": the platform's name, when it's one Reviews knows.
+            'source' => ($name = Formats::platformName($review->source)) !== null ? e($name) : null,
+            'source_url' => Values::url($review->sourceUrl),
             'status' => $review->status->value,
             'is_mine' => $viewer !== null && $review->user !== null && $review->user === (string) $viewer->id(),
             'site' => $review->site,

@@ -79,7 +79,7 @@ class StacheReviewRepository implements ReviewRepository
         $criteria = [];
 
         $reviews = $this->candidates(ReviewQuery::make()->entry($entry))
-            ->filter(fn (Review $review) => $review->isApproved() && ($site === null || $review->site === $site));
+            ->filter(fn (Review $review) => $review->isApproved() && $review->counted && ($site === null || $review->site === $site));
 
         foreach ($reviews as $review) {
             if (isset($stars[$review->rating])) {

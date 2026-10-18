@@ -31,6 +31,15 @@ class ReviewQuery
     /** The review to leave out (the visitor's own, say). */
     public ?string $except = null;
 
+    public ?bool $counted = null;
+
+    /** Where reviews came from: false for this site's own, true for any platform's, or a platform's key. */
+    public string|bool|null $source = null;
+
+    public ?string $sourceId = null;
+
+    public ?string $fingerprint = null;
+
     public string $sort = 'newest';
 
     public const SORTS = ['newest', 'oldest', 'highest', 'lowest', 'helpful'];
@@ -84,6 +93,41 @@ class ReviewQuery
     public function withPhotos(?bool $withPhotos = true): static
     {
         $this->withPhotos = $withPhotos;
+
+        return $this;
+    }
+
+    /**
+     * Only reviews that count towards the average (or only those that don't).
+     */
+    public function counted(?bool $counted = true): static
+    {
+        $this->counted = $counted;
+
+        return $this;
+    }
+
+    /**
+     * false: written on this site. true: imported or synced. A platform's
+     * key: from that platform.
+     */
+    public function source(string|bool|null $source): static
+    {
+        $this->source = $source;
+
+        return $this;
+    }
+
+    public function sourceId(?string $sourceId): static
+    {
+        $this->sourceId = $sourceId;
+
+        return $this;
+    }
+
+    public function fingerprint(?string $fingerprint): static
+    {
+        $this->fingerprint = $fingerprint;
 
         return $this;
     }
@@ -158,6 +202,30 @@ class ReviewQuery
         }
 
         if ($this->email !== null && mb_strtolower((string) $review->email) !== $this->email) {
+            return false;
+        }
+
+        if ($this->counted !== null && $review->counted !== $this->counted) {
+            return false;
+        }
+
+        if ($this->source === false && $review->source !== null) {
+            return false;
+        }
+
+        if ($this->source === true && $review->source === null) {
+            return false;
+        }
+
+        if (is_string($this->source) && $review->source !== $this->source) {
+            return false;
+        }
+
+        if ($this->sourceId !== null && $review->sourceId !== $this->sourceId) {
+            return false;
+        }
+
+        if ($this->fingerprint !== null && $review->fingerprint !== $this->fingerprint) {
             return false;
         }
 

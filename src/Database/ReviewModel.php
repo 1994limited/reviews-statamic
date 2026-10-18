@@ -17,6 +17,7 @@ class ReviewModel extends Model
         'ratings' => 'array',
         'photos' => 'array',
         'verified' => 'boolean',
+        'counted' => 'boolean',
         'has_photos' => 'boolean',
         'rating' => 'integer',
         'helpful' => 'integer',

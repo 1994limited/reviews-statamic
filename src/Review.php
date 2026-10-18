@@ -82,6 +82,27 @@ class Review implements ContainsQueryableValues
      */
     public array $voters = [];
 
+    /**
+     * Where it came from: null when written on this site, or a platform's
+     * key ("judgeme") when imported or synced.
+     */
+    public ?string $source = null;
+
+    /** The sync source it came from. */
+    public ?string $sourceId = null;
+
+    /** Its page on the platform it came from. */
+    public ?string $sourceUrl = null;
+
+    /**
+     * Whether it counts towards the average and the schema: always for this
+     * site's own reviews; for imported ones, only when an editor said so.
+     */
+    public bool $counted = true;
+
+    /** What tells an imported review apart, so it's never added twice. */
+    public ?string $fingerprint = null;
+
     public ?CarbonImmutable $createdAt = null;
 
     public ?CarbonImmutable $updatedAt = null;
@@ -132,6 +153,11 @@ class Review implements ContainsQueryableValues
         $review->photos = static::readPhotos($data['photos'] ?? []);
         $review->helpful = max(0, (int) (is_numeric($data['helpful'] ?? null) ? $data['helpful'] : 0));
         $review->voters = array_values(array_filter((array) ($data['voters'] ?? []), 'is_string'));
+        $review->source = $text($data['source'] ?? null);
+        $review->sourceId = $text($data['source_id'] ?? null);
+        $review->sourceUrl = $text($data['source_url'] ?? null);
+        $review->counted = filter_var($data['counted'] ?? true, FILTER_VALIDATE_BOOL);
+        $review->fingerprint = $text($data['fingerprint'] ?? null);
         $review->createdAt = static::date($data['created_at'] ?? null);
         $review->updatedAt = static::date($data['updated_at'] ?? null);
         $review->approvedAt = static::date($data['approved_at'] ?? null);
@@ -183,8 +209,8 @@ class Review implements ContainsQueryableValues
         }
 
         return collect($value)
-            ->filter(fn ($photo) => is_array($photo) && (is_string($photo['asset'] ?? null) || (is_string($photo['disk'] ?? null) && is_string($photo['path'] ?? null))))
-            ->map(fn ($photo) => array_filter(array_intersect_key($photo, array_flip(['asset', 'disk', 'path'])), 'is_string'))
+            ->filter(fn ($photo) => is_array($photo) && (is_string($photo['asset'] ?? null) || is_string($photo['url'] ?? null) || (is_string($photo['disk'] ?? null) && is_string($photo['path'] ?? null))))
+            ->map(fn ($photo) => array_filter(array_intersect_key($photo, array_flip(['asset', 'url', 'disk', 'path'])), 'is_string'))
             ->values()
             ->all();
     }
@@ -286,10 +312,21 @@ class Review implements ContainsQueryableValues
             'photos' => $this->photos ?: null,
             'helpful' => $this->helpful ?: null,
             'voters' => $this->voters ?: null,
+            'source' => $this->source,
+            'source_id' => $this->sourceId,
+            'source_url' => $this->sourceUrl,
+            'counted' => $this->counted ? null : false,
+            'fingerprint' => $this->fingerprint,
             'created_at' => $this->createdAt?->toIso8601String(),
             'updated_at' => $this->updatedAt?->toIso8601String(),
             'approved_at' => $this->approvedAt?->toIso8601String(),
         ], fn ($value) => $value !== null && $value !== '');
+    }
+
+    /** Written on this site, rather than imported or synced. */
+    public function isOwn(): bool
+    {
+        return $this->source === null;
     }
 
     /**
@@ -342,6 +379,10 @@ class Review implements ContainsQueryableValues
             'verified' => $this->verified,
             'helpful' => $this->helpful,
             'order' => $this->order,
+            'source' => $this->source,
+            'source_id' => $this->sourceId,
+            'counted' => $this->counted,
+            'fingerprint' => $this->fingerprint,
             default => null,
         };
     }

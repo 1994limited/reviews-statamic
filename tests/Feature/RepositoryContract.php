@@ -133,6 +133,39 @@ trait RepositoryContract
     }
 
     #[Test]
+    public function it_keeps_where_an_imported_review_came_from(): void
+    {
+        $review = $this->review(['rating' => 4]);
+        $review->source = 'judgeme';
+        $review->sourceId = 'src-1';
+        $review->sourceUrl = 'https://judge.me/r/1';
+        $review->counted = false;
+        $review->fingerprint = str_repeat('a', 64);
+        $review->photos = [['url' => 'https://judge.me/p.jpg']];
+        $this->repository()->save($review);
+
+        $found = $this->repository()->find($review->id);
+
+        $this->assertSame('judgeme', $found->source);
+        $this->assertSame('src-1', $found->sourceId);
+        $this->assertSame('https://judge.me/r/1', $found->sourceUrl);
+        $this->assertFalse($found->counted);
+        $this->assertSame([['url' => 'https://judge.me/p.jpg']], $found->photos);
+        $this->assertFalse($found->isOwn());
+
+        $own = $this->review(['rating' => 5]);
+
+        $this->assertSame([$review->id], $this->repository()->get(ReviewQuery::make()->fingerprint(str_repeat('a', 64)))->pluck('id')->all());
+        $this->assertSame([$own->id], $this->repository()->get(ReviewQuery::make()->source(false))->pluck('id')->all());
+        $this->assertSame([$review->id], $this->repository()->get(ReviewQuery::make()->source('judgeme'))->pluck('id')->all());
+        $this->assertSame([$review->id], $this->repository()->get(ReviewQuery::make()->sourceId('src-1'))->pluck('id')->all());
+        $this->assertSame([$own->id], $this->repository()->get(ReviewQuery::make()->counted())->pluck('id')->all());
+
+        // Only reviews that count are in the numbers.
+        $this->assertSame([5 => 1, 4 => 0, 3 => 0, 2 => 0, 1 => 0], $this->repository()->tally('book')['stars']);
+    }
+
+    #[Test]
     public function it_counts_reviews_in_each_status(): void
     {
         $this->review();

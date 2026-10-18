@@ -108,7 +108,8 @@ class ActionsController
     {
         $found = $this->reviews->find($review);
 
-        if (! $found || ! $found->isApproved()) {
+        // Votes are for this site's own reviews, not ones from elsewhere.
+        if (! $found || ! $found->isApproved() || ! $found->isOwn()) {
             return $this->failure($request, ['review' => __('reviews::messages.not_found')]);
         }
 

@@ -119,6 +119,13 @@ return [
         'update' => 'Update your review',
     ],
 
+    'import' => [
+        'business' => 'A review of the business (choose where those go)',
+        'from' => 'From :platform',
+        'see_it' => 'See it there',
+        'permission' => 'Import and sync reviews',
+    ],
+
     'cp' => [
         'reviews' => 'Reviews',
         'pending_widget' => 'Reviews waiting',
