@@ -129,6 +129,8 @@ return [
     'cp' => [
         'reviews' => 'Reviews',
         'pending_widget' => 'Reviews waiting',
+        'import' => 'Import',
+        'sync' => 'Sync',
         'all_caught_up' => 'All caught up: no reviews are waiting.',
     ],
 

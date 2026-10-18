@@ -2,7 +2,9 @@
 
 namespace NineteenNinetyFour\Reviews\Tests\Feature;
 
+use Illuminate\Http\UploadedFile;
 use Inertia\Testing\AssertableInertia;
+use NineteenNinetyFour\Reviews\ReviewQuery;
 use NineteenNinetyFour\Reviews\ReviewStatus;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use NineteenNinetyFour\Reviews\Widgets\PendingReviews;
@@ -254,5 +256,40 @@ class ControlPanelTest extends TestCase
                 ->has('reviews', 1)
                 ->where('site.handle', 'french')
                 ->etc());
+    }
+
+    #[Test]
+    public function importing_needs_its_own_permission(): void
+    {
+        $response = $this->actingAs($this->editor(['view reviews', 'moderate reviews']))->get(cp_route('reviews.import'));
+
+        $this->assertContains($response->getStatusCode(), [302, 403]);
+    }
+
+    #[Test]
+    public function a_file_is_previewed_then_imported(): void
+    {
+        $this->actingAs($this->editor(['view reviews', 'import reviews']));
+        $csv = "title,body,rating,review_date,reviewer_name,product_handle,curated\n"
+            ."Hi,Fine,4,2026-02-01,Cat,the-long-field,ok\n"
+            ."Hey,Lost,3,2026-02-02,Dot,no-such-book,ok\n";
+
+        $this->inertia(cp_route('reviews.import'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->component('reviews::Import')->etc());
+
+        $preview = $this->post(cp_route('reviews.import.preview'), ['file' => UploadedFile::fake()->createWithContent('judgeme.csv', $csv), 'counted' => '1'], ['X-Inertia' => 'true']);
+        $preview->assertOk();
+        $state = $preview->json('props.state');
+
+        $this->assertSame('Judge.me', $state['format']);
+        $this->assertSame(1, $state['counts']['matched']);
+        $this->assertSame(['handle no-such-book'], $state['counts']['unmatched']);
+        $this->assertSame(0, $this->reviews()->repository()->count(ReviewQuery::make()));
+
+        $done = $this->post(cp_route('reviews.import.run'), ['token' => $state['token'], 'counted' => '1'], ['X-Inertia' => 'true']);
+        $this->assertSame(1, $done->json('props.state.done.added'));
+        $this->assertSame(1, $this->reviews()->summary('book')->count());
+
+        // The file's gone: it can't be imported twice from here.
+        $this->post(cp_route('reviews.import.run'), ['token' => $state['token']], ['X-Inertia' => 'true'])->assertNotFound();
     }
 }

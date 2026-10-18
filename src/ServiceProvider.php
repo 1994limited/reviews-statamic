@@ -158,6 +158,7 @@ class ServiceProvider extends AddonServiceProvider
                         Permission::make('moderate reviews')->label(__('reviews::messages.permissions.moderate')),
                         Permission::make('reply to reviews')->label(__('reviews::messages.permissions.reply')),
                         Permission::make('delete reviews')->label(__('reviews::messages.permissions.delete')),
+                        Permission::make('import reviews')->label(__('reviews::messages.import.permission')),
                     ]);
                 });
             });
@@ -167,7 +168,10 @@ class ServiceProvider extends AddonServiceProvider
             $nav->content(__('reviews::messages.cp.reviews'))
                 ->route('reviews.index')
                 ->icon(self::ICON)
-                ->can('view reviews');
+                ->can('view reviews')
+                ->children(fn () => [
+                    Nav::item(__('reviews::messages.cp.import'))->route('reviews.import')->can('import reviews'),
+                ]);
         });
     }
 
