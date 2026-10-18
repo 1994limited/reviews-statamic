@@ -1,6 +1,6 @@
 **Collect reviews and star ratings on your own site: a review form for any entry, moderation in the Control Panel, and averages, reviews and review schema in your templates.**
 
-Other review addons copy reviews in from Google, Yotpo or Trustpilot. Reviews collects them on your site, from your visitors and customers, and keeps them in flat files or your database.
+Most review addons copy reviews in from Google, Yotpo or Trustpilot. Reviews collects them on your site, from your visitors and customers, and keeps them in flat files or your database. Moving from another platform, or still using one? It imports and syncs those reviews too.
 
 ## Review anything
 
@@ -49,6 +49,10 @@ If you want them: re-saved without location data, and kept private until the rev
 ## Emails
 
 New reviews to editors; approvals and replies to reviewers.
+
+## Import and sync
+
+Import reviews from Yotpo, Judge.me, REVIEWS.io, Shopify Product Reviews, Trustpilot or WooCommerce exports, or any CSV or JSON with a rating column: see what would be added before anything is. Or sync from Feefo, REVIEWS.io, Judge.me, Yotpo and Trustpilot on a schedule. Each review shows where it came from, and only your own reviews go in your schema, as Google asks.
 
 ## Cargo shops
 

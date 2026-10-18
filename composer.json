@@ -35,7 +35,7 @@
     "require": {
         "php": "^8.3",
         "statamic/cms": "^6.35",
-        "1994/reviews-core": "^1.0@dev"
+        "1994/reviews-core": "^1.0"
     },
     "require-dev": {
         "duncanmcclean/statamic-cargo": "^1.15",
@@ -69,11 +69,5 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true,
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../reviews-core"
-        }
-    ]
+    "prefer-stable": true
 }

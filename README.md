@@ -4,7 +4,7 @@ Collect reviews and star ratings on your own site: a review form for any entry, 
 
 ![Reviews for Statamic: write it, check it, show it. A bookshop's book page with its star rating](docs/marketplace/cover-1600x900.png)
 
-Other review addons copy reviews in from Google, Yotpo or Trustpilot. Reviews collects them on your site, from your visitors and customers, and keeps them in **flat files** or **your database**. With [Cargo](https://builtwithcargo.dev), reviews by customers who bought the product are marked as **verified purchases**.
+Most review addons copy reviews in from Google, Yotpo or Trustpilot. Reviews collects them on your site, from your visitors and customers, and keeps them in **flat files** or **your database**. With [Cargo](https://builtwithcargo.dev), reviews by customers who bought the product are marked as **verified purchases**. Moving from another platform, or still using one? Reviews imports and syncs those reviews too.
 
 ## Features
 
@@ -18,6 +18,8 @@ Other review addons copy reviews in from Google, Yotpo or Trustpilot. Reviews co
 - **Spam protection without puzzles.** A honeypot, a time trap and a link limit on every form, rate limits, and optionally a captcha: **Cloudflare Turnstile, hCaptcha, reCAPTCHA v2 or v3**, or your own.
 - **Photos**, if you want them: re-saved without location data, and kept private until the review is approved.
 - **Emails.** New reviews to editors; approvals and replies to reviewers.
+- **Import and sync.** Import exports from Yotpo, Judge.me, REVIEWS.io, Shopify Product Reviews, Trustpilot and WooCommerce, previewed before anything's added. Sync from Feefo, REVIEWS.io, Judge.me, Yotpo and Trustpilot on a schedule. Each review shows where it came from, and only your own go in your schema, as Google asks.
+- **Multi-site.** Reviews shared across a site's translations, or separate for each site.
 - **Cargo shops.** Verified purchase badges, reviews from buyers only, and emails asking customers to review what they bought, a set time after their order.
 - **Private by default.** No IP addresses kept. Export or forget someone's reviews with one command.
 - **Ready-made, or your own markup.** Two tags give you a finished reviews section whose styles take your site's fonts and colours, with every colour and size a CSS variable. Or write your own markup in Antlers or Blade: every example has both.
