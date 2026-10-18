@@ -116,7 +116,7 @@ class SendRequests extends Command
         $products = collect($cargo->products($order))
             ->map(fn ($id) => $reviews->entry($id, $order->site()?->handle()))
             ->filter(fn ($entry) => $entry && $reviews->reviewable($entry))
-            ->reject(fn ($entry) => $reviews->existing($reviews->entryId($entry), $user, $email) !== null)
+            ->reject(fn ($entry) => $reviews->existing($reviews->entryId($entry), $user, $email, $order->site()?->handle()) !== null)
             ->map(fn ($entry) => [
                 'title' => (string) $entry->get('title'),
                 'url' => Links::order((string) $order->id(), $reviews->entryId($entry)),

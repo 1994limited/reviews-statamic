@@ -13,7 +13,7 @@ The entry's approved reviews. A pair, looping over them; or with `as="items"`, o
 | `rating` | Only these ratings: `5`, or `4\|5`. |
 | `verified` | `true` for verified purchases only. |
 | `photos` | `true` for reviews with photos only. |
-| `site` | `current` for reviews written on the current site only. All sites by default. |
+| `site` | `current` for reviews written on the current site only, `all` for every site's, or a site's handle. By default, every site's, or the current site's when sites have separate reviews. |
 | `limit` | At most this many. |
 | `paginate` | This many per page, with `paginate` variables. |
 | `page_name` | The query string for the page (`reviews_page`). |

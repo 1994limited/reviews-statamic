@@ -38,7 +38,8 @@ class Schema
     public function data(Entry $entry, ?string $type = null, ?string $id = null, ?int $reviews = null): ?array
     {
         $entryId = $this->reviews->entryId($entry);
-        $summary = $this->reviews->summary($entryId);
+        $site = $this->reviews->siteScope();
+        $summary = $this->reviews->summary($entryId, $site);
 
         if ($summary->count() === 0) {
             return null;
@@ -75,7 +76,7 @@ class Schema
 
         if ($limit > 0) {
             $data['review'] = $this->reviews->repository()
-                ->get(ReviewQuery::make()->entry($entryId)->approved()->sort('newest'), $limit)
+                ->get(ReviewQuery::make()->entry($entryId)->site($site)->approved()->sort('newest'), $limit)
                 ->map(fn (Review $review) => array_filter([
                     '@type' => 'Review',
                     'author' => ['@type' => 'Person', 'name' => Reviews::displayName($review->name)],

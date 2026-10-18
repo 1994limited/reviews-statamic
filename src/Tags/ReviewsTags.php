@@ -499,11 +499,20 @@ class ReviewsTags extends Tags
         return $rating === null ? null : array_map('intval', explode('|', $rating));
     }
 
+    /**
+     * The site to show reviews from: the site="" parameter, or else the
+     * current site when each site has its own reviews (and every site's
+     * when they're shared).
+     */
     protected function siteParam(): ?string
     {
         $site = $this->param('site');
 
-        if ($site === null || $site === 'all') {
+        if ($site === null) {
+            return $this->reviews()->siteScope();
+        }
+
+        if ($site === 'all') {
             return null;
         }
 

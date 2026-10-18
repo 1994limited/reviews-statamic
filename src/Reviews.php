@@ -13,6 +13,7 @@ use NineteenNinetyFour\Reviews\Events\ReviewReplied;
 use Statamic\Contracts\Auth\User;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Facades\Entry;
+use Statamic\Facades\Site;
 use Statamic\StaticCaching\Invalidator;
 use Throwable;
 
@@ -174,12 +175,27 @@ class Reviews
     */
 
     /**
-     * The review someone already wrote of an entry, if any: by their user
-     * account when signed in, or else their email.
+     * The site reviews are kept apart by: the current one (or the one given)
+     * when each site has its own reviews, or null when they're shared
+     * across sites, as translations of one entry.
      */
-    public function existing(string $entry, ?User $user, ?string $email = null): ?Review
+    public function siteScope(?string $site = null): ?string
     {
-        $query = ReviewQuery::make()->entry($entry);
+        if (Settings::string('sites', 'shared') !== 'separate') {
+            return null;
+        }
+
+        return $site ?? Site::current()->handle();
+    }
+
+    /**
+     * The review someone already wrote of an entry, if any: by their user
+     * account when signed in, or else their email. With separate sites,
+     * only on the current site (or the one given).
+     */
+    public function existing(string $entry, ?User $user, ?string $email = null, ?string $site = null): ?Review
+    {
+        $query = ReviewQuery::make()->entry($entry)->site($this->siteScope($site));
 
         if ($user) {
             $query->user((string) $user->id());

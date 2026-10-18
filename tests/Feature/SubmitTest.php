@@ -211,6 +211,57 @@ class SubmitTest extends TestCase
     }
 
     #[Test]
+    public function separate_sites_each_have_their_own_reviews(): void
+    {
+        config(['statamic.system.multisite' => true, 'reviews.sites' => 'separate']);
+        Site::setSites([
+            'default' => ['name' => 'English', 'url' => '/', 'locale' => 'en_GB'],
+            'french' => ['name' => 'French', 'url' => '/fr/', 'locale' => 'fr_FR'],
+        ])->save();
+        Collection::find('products')->sites(['default', 'french'])->routes('/products/{slug}')->save();
+
+        $original = Entry::find('book');
+        $original->makeLocalization('french')->id('livre')->slug('le-long-champ')->save();
+
+        $this->post('/!/reviews/submit', $this->submission(['rating' => 5]))->assertSessionHasNoErrors();
+        $this->post('/!/reviews/submit', $this->submission(['entry' => 'livre', 'rating' => 1]))->assertSessionHasNoErrors();
+
+        // The same email reviewed it on each site: two reviews.
+        $reviews = $this->reviews();
+        $this->assertSame(2, $reviews->repository()->count(ReviewQuery::make()));
+        $reviews->repository()->get(ReviewQuery::make())->each(fn (Review $review) => $reviews->approve($review));
+
+        Site::setCurrent('default');
+        $this->assertSame(5.0, $reviews->summary('book', $reviews->siteScope())->average());
+        $this->assertSame('5', trim((string) $this->antlers('{{ reviews:average entry="book" }}')));
+
+        Site::setCurrent('french');
+        $this->assertSame(1.0, $reviews->summary('book', $reviews->siteScope())->average());
+        $this->assertSame('2', trim((string) $this->antlers('{{ reviews:count entry="book" site="all" }}')));
+    }
+
+    #[Test]
+    public function shared_sites_show_every_site_s_reviews(): void
+    {
+        config(['statamic.system.multisite' => true]);
+        Site::setSites([
+            'default' => ['name' => 'English', 'url' => '/', 'locale' => 'en_GB'],
+            'french' => ['name' => 'French', 'url' => '/fr/', 'locale' => 'fr_FR'],
+        ])->save();
+        Collection::find('products')->sites(['default', 'french'])->routes('/products/{slug}')->save();
+        Entry::find('book')->makeLocalization('french')->id('livre')->slug('le-long-champ')->save();
+
+        $this->post('/!/reviews/submit', $this->submission(['rating' => 5]))->assertSessionHasNoErrors();
+        $this->post('/!/reviews/submit', $this->submission(['entry' => 'livre', 'rating' => 1]))->assertSessionHasNoErrors();
+
+        // Shared: the second is the same person's repeat, and not kept.
+        $this->assertSame(1, $this->reviews()->repository()->count(ReviewQuery::make()));
+        $this->reviews()->approve($this->only());
+        Site::setCurrent('french');
+        $this->assertSame('1', trim((string) $this->antlers('{{ reviews:count entry="book" }}')));
+    }
+
+    #[Test]
     public function guests_can_be_turned_away(): void
     {
         config(['reviews.form.who' => 'users']);

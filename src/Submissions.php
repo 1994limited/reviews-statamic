@@ -84,22 +84,25 @@ class Submissions
         // What they sent is checked before anything about earlier reviews,
         // so the answer can't tell anyone whether an address has reviewed
         // the entry before.
-        $existing = $user ? $this->reviews->existing($entryId, $user) : null;
+        // The site it's written on is the entry's: the form posts to the
+        // same address from every site.
+        $site = $entry->locale();
+        $existing = $user ? $this->reviews->existing($entryId, $user, null, $site) : null;
         $data = $this->validate($request, $entry, $user, $existing);
 
         // One review per person per entry, even when two arrive at once.
         $identity = $user ? 'user:'.$user->id() : 'email:'.mb_strtolower((string) $data['email']);
 
         try {
-            return Cache::lock('reviews:submit:'.sha1($entryId.'|'.$identity), 60)->block(10, function () use ($user, $entryId, $orders, $data) {
-                $existing = $this->reviews->existing($entryId, $user, $user ? null : $data['email']);
+            return Cache::lock('reviews:submit:'.sha1($entryId.'|'.$this->reviews->siteScope($site).'|'.$identity), 60)->block(10, function () use ($user, $entryId, $orders, $data, $site) {
+                $existing = $this->reviews->existing($entryId, $user, $user ? null : $data['email'], $site);
 
                 if ($existing && ! $user) {
                     // Thanked as a new review would be, and nothing kept.
                     throw new DuplicateReview;
                 }
 
-                return $this->store($existing, $user, $entryId, $orders, $data);
+                return $this->store($existing, $user, $entryId, $orders, $data, $site);
             });
         } catch (LockTimeoutException) {
             // The same person's review is being saved right now: this one is
@@ -112,11 +115,11 @@ class Submissions
      * @param  array<int, string>  $orders
      * @param  array<string, mixed>  $data
      */
-    protected function store(?Review $existing, ?User $user, string $entryId, array $orders, array $data): Review
+    protected function store(?Review $existing, ?User $user, string $entryId, array $orders, array $data, ?string $site = null): Review
     {
         $review = $existing ?? Review::make();
         $review->entry = $entryId;
-        $review->site ??= Site::current()->handle();
+        $review->site ??= $site ?? Site::current()->handle();
         $review->rating = (int) $data['rating'];
         $review->ratings = $data['ratings'];
         $review->title = $data['title'];

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **Reviews across sites.** On a multi-site install, reviews can be shared (the default, as before: an entry has the same reviews on every site) or separate: each site has its own reviews, average and schema, and someone can review the same entry on each. Under Settings, or `sites` in `config/reviews.php`.
+
+### Changed
+- A review's site is now the site of the entry it's of, rather than whichever site handled the form.
+
 ## 1.1.1 (2026-10-16)
 
 ### Fixed

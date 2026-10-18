@@ -50,6 +50,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Reviews across sites
+    |--------------------------------------------------------------------------
+    |
+    | On a multi-site install: "shared", where an entry has the same reviews
+    | on every site (its translations), or "separate", where each site has
+    | its own reviews, average and schema (sites that are their own shops).
+    | Also editable in the Control Panel.
+    |
+    */
+
+    'sites' => 'shared',
+
+    /*
+    |--------------------------------------------------------------------------
     | The review form
     |--------------------------------------------------------------------------
     */

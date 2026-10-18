@@ -11,6 +11,7 @@ php artisan vendor:publish --tag=reviews-config
 | Tab | Setting | What it does |
 | --- | --- | --- |
 | Reviews | Collections | Entries in these collections take reviews. Empty for every collection with pages. |
+| | Reviews across sites | For a multi-site install. Shared (the default): an entry has the same reviews on every site, as suits translations. Separate: each site has its own reviews, average and schema, and someone can review the same entry on each. |
 | | Who can write reviews | Anyone (guests give a name and email), or signed-in users only. |
 | | Only buyers can review products | With [Cargo](cargo.md). |
 | | A title is required / Text is required | With text optional, a star rating alone is a review. |

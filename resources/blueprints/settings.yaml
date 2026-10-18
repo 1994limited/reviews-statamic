@@ -13,6 +13,16 @@ tabs:
               instructions: 'Entries in these collections take reviews. Leave empty for every collection with pages.'
               mode: select
           -
+            handle: sites
+            field:
+              type: button_group
+              display: 'Reviews across sites'
+              instructions: 'For a multi-site install. Shared suits translations of one site: an entry has the same reviews on each. Separate suits sites that are their own shops: each has its own reviews, average and schema.'
+              options:
+                shared: 'Shared'
+                separate: 'Separate'
+              default: shared
+          -
             handle: who
             field:
               type: button_group

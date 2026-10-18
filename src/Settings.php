@@ -17,6 +17,7 @@ class Settings
     /** Settings fields and the config they fall back to. */
     protected const CONFIG = [
         'collections' => 'reviews.collections',
+        'sites' => 'reviews.sites',
         'who' => 'reviews.form.who',
         'require_title' => 'reviews.form.require_title',
         'require_body' => 'reviews.form.require_body',
