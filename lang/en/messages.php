@@ -129,6 +129,8 @@ return [
     'sync' => [
         'name' => 'name',
         'unknown_platform' => 'Reviews doesn’t sync from that platform.',
+        'running' => 'This source is syncing already. Try again in a few minutes.',
+        'partly_failed' => ':count review couldn’t be saved, so it’ll be fetched again next time: see the logs.|:count reviews couldn’t be saved, so they’ll be fetched again next time: see the logs.',
         'cant_count' => ':platform’s reviews can’t count towards your ratings: search engines don’t allow marking up reviews from other websites.',
     ],
 

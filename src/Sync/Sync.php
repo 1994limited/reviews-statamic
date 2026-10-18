@@ -130,6 +130,22 @@ class Sync
             throw new SyncException(__('reviews::messages.sync.unknown_platform'));
         }
 
+        // One sync of a source at a time, however it was started.
+        $lock = Cache::lock('reviews:sync:'.$source->id, 3600);
+
+        if (! $lock->get()) {
+            throw new SyncException(__('reviews::messages.sync.running'));
+        }
+
+        try {
+            return $this->fetch($source, $platform, $all);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    protected function fetch(Source $source, \NineteenNinetyFour\Reviews\Core\Sync\Source $platform, bool $all): ImportReport
+    {
         $since = ! $all && $source->lastSynced ? $source->lastSynced->subDays(self::OVERLAP_DAYS)->toDateTimeImmutable() : null;
         $started = CarbonImmutable::now();
         $report = new ImportReport;
@@ -144,17 +160,40 @@ class Sync
         try {
             $this->imports->import($platform->fetch($this->client ?? new LaravelClient(30), $source->resolvedSettings(), $since), $options, $report);
         } catch (Throwable $e) {
-            $source->lastError = mb_substr($e->getMessage(), 0, 2000);
-            $this->store->save($source);
+            $this->record($source, null, mb_substr($e->getMessage(), 0, 2000));
 
             throw $e instanceof SyncException ? $e : new SyncException($e->getMessage(), 0, $e);
         }
 
-        $source->lastSynced = $started;
-        $source->lastError = null;
-        $this->store->save($source);
+        // A review that couldn't be saved is fetched again next time: the
+        // sync isn't counted as done until every one is.
+        if ($report->failed > 0) {
+            $this->record($source, null, trans_choice('reviews::messages.sync.partly_failed', $report->failed, ['count' => $report->failed]));
+
+            return $report;
+        }
+
+        $this->record($source, $started, null);
 
         return $report;
+    }
+
+    /**
+     * Note how a sync went, on the source as it is now: an editor may have
+     * changed it while the sync ran.
+     */
+    protected function record(Source $source, ?CarbonImmutable $synced, ?string $error): void
+    {
+        $this->store->update($source->id, function (Source $current) use ($synced, $error) {
+            if ($synced) {
+                $current->lastSynced = $synced;
+            }
+
+            $current->lastError = $error;
+        });
+
+        $source->lastSynced = $synced ?? $source->lastSynced;
+        $source->lastError = $error;
     }
 
     /**
@@ -171,20 +210,12 @@ class Sync
                 continue;
             }
 
-            // One sync of a source at a time.
-            $lock = Cache::lock('reviews:sync:'.$source->id, 3600);
-
-            if (! $lock->get()) {
-                continue;
-            }
-
             try {
                 $result = $this->run($source);
+                $failed += $result->failed > 0 ? 1 : 0;
             } catch (Throwable $e) {
                 $failed++;
                 $result = $e;
-            } finally {
-                $lock->release();
             }
 
             $each && $each($source, $result);

@@ -3,6 +3,7 @@
 namespace NineteenNinetyFour\Reviews\Sync;
 
 use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -37,7 +38,38 @@ class SourceStore
         return $this->all()[$id] ?? null;
     }
 
+    /**
+     * Change a stored source in place: only what the callback changes, so
+     * nothing else saved meanwhile is undone.
+     *
+     * @param  callable(Source): void  $change
+     */
+    public function update(string $id, callable $change): void
+    {
+        $this->locked(function () use ($id, $change) {
+            $current = $this->find($id);
+
+            if ($current) {
+                $change($current);
+                $this->write1($current);
+            }
+        });
+    }
+
     public function save(Source $source): void
+    {
+        $this->locked(fn () => $this->write1($source));
+    }
+
+    /**
+     * Read-change-write of the sources, one request at a time.
+     */
+    protected function locked(callable $callback): void
+    {
+        Cache::lock('reviews:sources', 10)->block(10, $callback);
+    }
+
+    protected function write1(Source $source): void
     {
         $data = $this->encrypt($source);
 
@@ -60,15 +92,17 @@ class SourceStore
 
     public function delete(Source $source): void
     {
-        if ($this->database()) {
-            $this->table()->where('id', $source->id)->delete();
+        $this->locked(function () use ($source) {
+            if ($this->database()) {
+                $this->table()->where('id', $source->id)->delete();
 
-            return;
-        }
+                return;
+            }
 
-        $all = $this->read();
-        unset($all[$source->id]);
-        $this->write($all);
+            $all = $this->read();
+            unset($all[$source->id]);
+            $this->write($all);
+        });
     }
 
     /**

@@ -287,7 +287,14 @@ class ControlPanelTest extends TestCase
         $this->assertSame(['handle no-such-book'], $state['counts']['unmatched']);
         $this->assertSame(0, $this->reviews()->repository()->count(ReviewQuery::make()));
 
-        $done = $this->post(cp_route('reviews.import.run'), ['token' => $state['token'], 'counted' => '1'], ['X-Inertia' => 'true']);
+        // Another user can't import it.
+        $this->actingAs($this->user('other@example.com', ['access cp', 'view reviews', 'import reviews']))
+            ->post(cp_route('reviews.import.run'), ['token' => $state['token']], ['X-Inertia' => 'true'])
+            ->assertForbidden();
+
+        // What was previewed is what's imported: options sent now are ignored.
+        $this->actingAs($this->editor(['view reviews', 'import reviews']));
+        $done = $this->post(cp_route('reviews.import.run'), ['token' => $state['token'], 'counted' => '0', 'status' => 'pending'], ['X-Inertia' => 'true']);
         $this->assertSame(1, $done->json('props.state.done.added'));
         $this->assertSame(1, $this->reviews()->summary('book')->count());
 

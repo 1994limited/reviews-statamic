@@ -153,4 +153,32 @@ class ImportTest extends TestCase
                 ->where('review.photos.0.url', 'https://images.example/p.jpg')
                 ->etc());
     }
+
+    #[Test]
+    public function schema_never_lists_reviews_that_don_t_count(): void
+    {
+        $this->review(['rating' => 5, 'title' => 'Ours', 'created_at' => now()->subDays(10)->toIso8601String()]);
+
+        foreach (range(1, 6) as $n) {
+            $this->review(['rating' => 1, 'title' => 'Elsewhere '.$n, 'source' => 'trustpilot', 'counted' => false]);
+        }
+
+        $data = app(\NineteenNinetyFour\Reviews\Schema::class)->data(Entry::find('book'));
+
+        $this->assertSame(1, $data['aggregateRating']['reviewCount']);
+        $this->assertSame(['Ours'], array_column($data['review'], 'name'));
+    }
+
+    #[Test]
+    public function an_entry_id_outside_the_reviewed_collections_matches_nothing(): void
+    {
+        config(['reviews.collections' => ['products']]);
+        $csv = "id,entry,entry_title,rating,title,body,name,email,status,verified,created_at\n"
+            ."r1,about,About,5,Hi,Fine,Ann,,approved,0,2026-01-01\n";
+
+        $report = $this->imports()->import($this->imports()->read($csv)->reviews, new ImportOptions);
+
+        $this->assertSame(0, $report->added);
+        $this->assertSame([], $this->all());
+    }
 }

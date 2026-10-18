@@ -12,6 +12,7 @@ use NineteenNinetyFour\Reviews\Import\ImportOptions;
 use NineteenNinetyFour\Reviews\Import\Imports;
 use Statamic\Facades\Entry;
 use Statamic\Facades\Site;
+use Statamic\Facades\User;
 use Statamic\Http\Controllers\CP\CpController;
 
 /**
@@ -40,16 +41,22 @@ class ImportController extends CpController
         $this->authorize('import reviews');
 
         $request->validate(['file' => ['required', 'file', 'max:'.self::MAX_KILOBYTES]]);
+        $this->forgetOld();
 
         $token = Str::random(24);
-        File::ensureDirectoryExists(dirname($this->path($token)));
-        File::put($this->path($token), (string) file_get_contents($request->file('file')->getRealPath()));
-
+        $contents = (string) file_get_contents($request->file('file')->getRealPath());
         $options = $this->options($request);
-        $result = $this->imports->read((string) File::get($this->path($token)), $this->format($request));
+        $format = $this->format($request);
+        $result = $this->imports->read($contents, $format);
+
+        // Kept until it's imported, or for a day: the file, and exactly what
+        // was previewed, so the import does what the preview said.
+        if ($result->format) {
+            $this->keep($token, $contents, ['format' => $format, 'options' => (array) $options, 'user' => (string) User::current()?->id()]);
+        }
 
         return $this->page([
-            'token' => $token,
+            'token' => $result->format ? $token : null,
             'filename' => $request->file('file')->getClientOriginalName(),
             'format' => $result->format?->label(),
             'error' => $result->format ? null : ($result->skipped[0]['reason'] ?? __('The file couldn’t be read.')),
@@ -63,13 +70,47 @@ class ImportController extends CpController
         $this->authorize('import reviews');
 
         $token = (string) $request->input('token');
-        abort_unless(preg_match('/^[A-Za-z0-9]{24}$/', $token) && File::exists($this->path($token)), 404);
+        abort_unless(preg_match('/^[A-Za-z0-9]{24}$/', $token) && File::exists($this->path($token)) && File::exists($this->path($token, 'json')), 404);
 
-        $result = $this->imports->read((string) File::get($this->path($token)), $this->format($request));
-        $report = $this->imports->import($result->reviews, $this->options($request));
-        File::delete($this->path($token));
+        $kept = (array) json_decode((string) File::get($this->path($token, 'json')), true);
+
+        // Only whoever previewed it can import it.
+        abort_unless(($kept['user'] ?? null) === (string) User::current()?->id(), 403);
+
+        try {
+            $result = $this->imports->read((string) File::get($this->path($token)), $kept['format'] ?? null);
+            $report = $this->imports->import($result->reviews, new ImportOptions(...(array) ($kept['options'] ?? [])));
+        } finally {
+            File::delete([$this->path($token), $this->path($token, 'json')]);
+        }
 
         return $this->page(['done' => $report->toArray() + ['skipped' => count($result->skipped)]]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     */
+    protected function keep(string $token, string $contents, array $meta): void
+    {
+        File::ensureDirectoryExists(dirname($this->path($token)), 0700);
+
+        foreach ([$this->path($token) => $contents, $this->path($token, 'json') => (string) json_encode($meta)] as $path => $data) {
+            File::put($path, $data);
+            @chmod($path, 0600);
+        }
+    }
+
+    /**
+     * Previews nobody imported are deleted after a day: they hold people's
+     * names and email addresses.
+     */
+    protected function forgetOld(): void
+    {
+        foreach (File::glob(dirname($this->path('x')).'/*') ?: [] as $file) {
+            if (filemtime($file) < time() - 86400) {
+                File::delete($file);
+            }
+        }
     }
 
     /**
@@ -123,8 +164,8 @@ class ImportController extends CpController
         return is_string($format) && array_key_exists($format, Imports::formats()) ? $format : null;
     }
 
-    protected function path(string $token): string
+    protected function path(string $token, string $extension = 'txt'): string
     {
-        return storage_path('framework/reviews-import/'.$token.'.txt');
+        return storage_path('framework/reviews-import/'.$token.'.'.$extension);
     }
 }

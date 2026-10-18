@@ -3,14 +3,19 @@
 namespace NineteenNinetyFour\Reviews\Tests\Feature;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use NineteenNinetyFour\Reviews\Contracts\ReviewRepository;
 use NineteenNinetyFour\Reviews\Core\Sync\SyncException;
+use NineteenNinetyFour\Reviews\Import\Imports;
 use NineteenNinetyFour\Reviews\Review;
 use NineteenNinetyFour\Reviews\ReviewQuery;
+use NineteenNinetyFour\Reviews\Reviews;
 use NineteenNinetyFour\Reviews\ReviewStatus;
 use NineteenNinetyFour\Reviews\Sync\Source;
 use NineteenNinetyFour\Reviews\Sync\Sync;
 use NineteenNinetyFour\Reviews\Tests\FakeClient;
+use NineteenNinetyFour\Reviews\Tests\RefusingRepository;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -165,5 +170,62 @@ class SyncTest extends TestCase
         }
 
         return (string) file_get_contents(storage_path('reviews-sources.yaml'));
+    }
+
+    #[Test]
+    public function a_review_that_can_t_be_saved_keeps_the_sync_from_counting_as_done(): void
+    {
+        $source = $this->source();
+
+        // The repository refuses to save.
+        $this->app->instance(ReviewRepository::class, new RefusingRepository(app(ReviewRepository::class)));
+
+        foreach ([Reviews::class, Imports::class, Sync::class] as $class) {
+            $this->app->forgetInstance($class);
+        }
+
+        $this->sync()->client = new FakeClient([['reviews' => [['id' => 1, 'rating' => 5, 'product_handle' => 'the-long-field', 'body' => 'Fine', 'reviewer' => ['name' => 'Ok']]]]]);
+        $report = $this->sync()->run($this->sync()->find($source->id));
+
+        $this->assertSame(1, $report->failed);
+        $saved = $this->sync()->find($source->id);
+        $this->assertNull($saved->lastSynced);
+        $this->assertStringContainsString('couldn’t be saved', (string) $saved->lastError);
+    }
+
+    #[Test]
+    public function a_finishing_sync_keeps_an_editor_s_changes_to_its_source(): void
+    {
+        $source = $this->source(['name' => 'Before']);
+        $running = $this->sync()->find($source->id);
+
+        // An editor renames it and changes its key while it syncs.
+        $edited = $this->sync()->find($source->id);
+        $edited->name = 'After';
+        $edited->settings['api_token'] = 'new-token';
+        $this->sync()->save($edited);
+
+        $this->sync()->client = new FakeClient([['reviews' => []]]);
+        $this->sync()->run($running);
+
+        $saved = $this->sync()->find($source->id);
+        $this->assertSame('After', $saved->name);
+        $this->assertSame('new-token', $saved->settings['api_token']);
+        $this->assertNotNull($saved->lastSynced);
+    }
+
+    #[Test]
+    public function a_source_syncs_once_at_a_time(): void
+    {
+        $source = $this->source();
+        $lock = Cache::lock('reviews:sync:'.$source->id, 60);
+        $lock->get();
+
+        try {
+            $this->expectException(SyncException::class);
+            $this->sync()->run($source);
+        } finally {
+            $lock->release();
+        }
     }
 }

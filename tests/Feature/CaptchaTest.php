@@ -6,9 +6,11 @@ use Illuminate\Http\Client\Request as SentRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
+use NineteenNinetyFour\Reviews\Captcha\Turnstile;
 use NineteenNinetyFour\Reviews\Contracts\Captcha;
 use NineteenNinetyFour\Reviews\ReviewQuery;
 use NineteenNinetyFour\Reviews\Spam;
+use NineteenNinetyFour\Reviews\Summary;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -188,5 +190,25 @@ class MathsCaptcha implements Captcha
     public function fields(): array
     {
         return ['sum'];
+    }
+
+    #[Test]
+    public function the_1_1_captcha_classes_still_work_for_code_that_extends_them(): void
+    {
+        $this->assertSame(Turnstile::class, Spam::CAPTCHAS['turnstile']);
+
+        $captcha = new class('site', 'secret') extends Turnstile {};
+        $this->assertStringContainsString('data-sitekey="site"', $captcha->widget());
+        $this->assertSame(['cf-turnstile-response'], $captcha->fields());
+    }
+
+    #[Test]
+    public function a_summary_follows_changes_to_its_numbers(): void
+    {
+        $summary = new Summary([5 => 1, 4 => 0, 3 => 0, 2 => 0, 1 => 0]);
+        $summary->stars[1] = 1;
+
+        $this->assertSame(2, $summary->count());
+        $this->assertSame(3.0, $summary->average());
     }
 }

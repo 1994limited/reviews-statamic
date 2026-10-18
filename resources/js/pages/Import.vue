@@ -53,7 +53,7 @@ export default {
         },
 
         run() {
-            this.form.transform((data) => ({ ...data, file: null, token: this.state.token })).post(this.urls.run, { preserveScroll: true });
+            this.form.transform(() => ({ token: this.state.token })).post(this.urls.run, { preserveScroll: true });
         },
     },
 };

@@ -3,6 +3,7 @@
 namespace NineteenNinetyFour\Reviews\Http;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use NineteenNinetyFour\Reviews\Core\Http\Client;
 use Throwable;
 
@@ -19,7 +20,7 @@ class LaravelClient implements Client
         try {
             $response = Http::asForm()->timeout($this->timeout)->post($url, $form);
         } catch (Throwable $e) {
-            report($e);
+            $this->failed($url, $e);
 
             return null;
         }
@@ -32,11 +33,23 @@ class LaravelClient implements Client
         try {
             $response = Http::acceptJson()->withHeaders($headers)->timeout($this->timeout)->get($url, $query);
         } catch (Throwable $e) {
-            report($e);
+            $this->failed($url, $e);
 
             return null;
         }
 
         return $response->successful() && is_array($response->json()) ? $response->json() : null;
+    }
+
+    /**
+     * Log a failed request without its keys: platforms take them in the
+     * query string, which connection errors repeat in their messages.
+     */
+    protected function failed(string $url, Throwable $e): void
+    {
+        $where = (string) preg_replace('/[?#].*$/s', '', $url);
+        $message = (string) preg_replace('~(https?://[^\s?#]+)[?#][^\s]*~i', '$1', $e->getMessage());
+
+        Log::warning("Reviews: a request to {$where} failed: ".get_class($e).': '.$message);
     }
 }

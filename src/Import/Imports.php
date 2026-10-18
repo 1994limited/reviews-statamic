@@ -293,7 +293,11 @@ class Imports
         };
 
         if (isset($product['id']) && ($entry = Entry::find($product['id']))) {
-            return $entry;
+            $inCollection = $collections === [] || in_array($entry->collectionHandle(), $collections, true);
+
+            if ($inCollection) {
+                return $site !== null && $entry->locale() !== $site ? ($entry->in($site) ?? $entry) : $entry;
+            }
         }
 
         if (isset($product['sku']) && ($entry = $query()->where('sku', $product['sku'])->first())) {

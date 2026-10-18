@@ -17,17 +17,15 @@ class Summary
     /** @var array<string, array{sum: int, count: int}> */
     public array $criteria;
 
-    protected Core $core;
-
     /**
      * @param  array<int, int>  $stars  How many reviews gave each rating, 5 to 1.
      * @param  array<string, array{sum: int, count: int}>  $criteria
      */
     public function __construct(array $stars, array $criteria = [])
     {
-        $this->core = new Core($stars, $criteria);
-        $this->stars = $this->core->stars;
-        $this->criteria = $this->core->criteria;
+        $core = new Core($stars, $criteria);
+        $this->stars = $core->stars;
+        $this->criteria = $core->criteria;
     }
 
     public static function from(array $tally): static
@@ -37,7 +35,7 @@ class Summary
 
     public function count(): int
     {
-        return $this->core->count();
+        return $this->core()->count();
     }
 
     /**
@@ -45,7 +43,7 @@ class Summary
      */
     public function average(): ?float
     {
-        return $this->core->average();
+        return $this->core()->average();
     }
 
     /**
@@ -53,15 +51,16 @@ class Summary
      */
     public function criterionAverage(string $handle): ?float
     {
-        return $this->core->criterionAverage($handle);
+        return $this->core()->criterionAverage($handle);
     }
 
     /**
-     * The same numbers as reviews-core has them.
+     * The same numbers as reviews-core has them, from this summary's
+     * stars and criteria as they are now.
      */
     public function core(): Core
     {
-        return $this->core;
+        return new Core($this->stars, $this->criteria);
     }
 
     public function toArray(): array

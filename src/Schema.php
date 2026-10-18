@@ -53,7 +53,7 @@ class Schema
 
         $latest = $limit > 0
             ? $this->reviews->repository()
-                ->get(ReviewQuery::make()->entry($entryId)->site($site)->approved()->sort('newest'), $limit)
+                ->get(ReviewQuery::make()->entry($entryId)->site($site)->approved()->counted()->sort('newest'), $limit)
                 ->map(fn (Review $review) => new SchemaReview(
                     rating: $review->rating,
                     author: Reviews::displayName($review->name),

@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use InvalidArgumentException;
 use NineteenNinetyFour\Reviews\Captcha\CoreCaptcha;
+use NineteenNinetyFour\Reviews\Captcha\HCaptcha;
+use NineteenNinetyFour\Reviews\Captcha\Recaptcha;
+use NineteenNinetyFour\Reviews\Captcha\RecaptchaV3;
+use NineteenNinetyFour\Reviews\Captcha\Turnstile;
 use NineteenNinetyFour\Reviews\Contracts\Captcha;
 use NineteenNinetyFour\Reviews\Core\Captcha\Captchas;
 use NineteenNinetyFour\Reviews\Core\Spam\Links;
@@ -114,8 +118,16 @@ class Spam
     |--------------------------------------------------------------------------
     */
 
-    /** The drivers that come with the addon, from reviews-core. */
-    public const CAPTCHAS = ['turnstile', 'hcaptcha', 'recaptcha', 'recaptcha_v3'];
+    /**
+     * The drivers that come with the addon. The form uses reviews-core's;
+     * these classes are kept, as they were, for code that extends them.
+     */
+    public const CAPTCHAS = [
+        'turnstile' => Turnstile::class,
+        'hcaptcha' => HCaptcha::class,
+        'recaptcha' => Recaptcha::class,
+        'recaptcha_v3' => RecaptchaV3::class,
+    ];
 
     /**
      * The captcha the form uses, or null for none.

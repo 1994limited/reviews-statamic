@@ -39,7 +39,9 @@ php please reviews:import exports/yotpo.csv --counted --business=reviews-page
 
 ### Moving between sites
 
-`php please reviews:export-all reviews.csv` writes every review as a CSV that Reviews (for Statamic or Craft) imports.
+`php please reviews:export-all reviews.csv` writes every review as a CSV that Reviews (for Statamic or Craft) imports: what each says, who wrote it, its status, the reply and dates, and where an imported one came from. Photos stay on the old site, as assets. Reviews synced from a platform are best synced again on the new site, from the same source, rather than moved.
+
+Every cell is safe to open in a spreadsheet: one starting with `=`, `+`, `-` or `@` gets a `'` in front, so nothing a reviewer wrote can run as a formula. Reviews takes it off again when it imports the file.
 
 ## Syncing
 

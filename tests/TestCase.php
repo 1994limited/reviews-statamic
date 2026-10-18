@@ -147,6 +147,8 @@ abstract class TestCase extends AddonTestCase
         $review->verified = $data['verified'] ?? false;
         $review->helpful = $data['helpful'] ?? 0;
         $review->photos = $data['photos'] ?? [];
+        $review->source = $data['source'] ?? null;
+        $review->counted = $data['counted'] ?? true;
 
         if (isset($data['created_at'])) {
             $review->createdAt = CarbonImmutable::parse($data['created_at']);
