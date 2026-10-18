@@ -4,6 +4,7 @@ namespace NineteenNinetyFour\Reviews\Tests\Feature;
 
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Event;
+use NineteenNinetyFour\Reviews\Core\Spam\TimeToken;
 use NineteenNinetyFour\Reviews\Events\ReviewApproved;
 use NineteenNinetyFour\Reviews\Events\ReviewSubmitted;
 use NineteenNinetyFour\Reviews\Review;
@@ -374,12 +375,26 @@ class SubmitTest extends TestCase
     }
 
     #[Test]
+    public function forms_drawn_before_1_2_still_work(): void
+    {
+        config(['reviews.spam.minimum_seconds' => 3]);
+
+        // Their time was encrypted, rather than signed.
+        $this->post('/!/reviews/submit', $this->submission([Spam::TIME_FIELD => Crypt::encryptString((string) (time() - 60))]))->assertSessionHasNoErrors();
+        $this->post('/!/reviews/submit', $this->submission([Spam::TIME_FIELD => Crypt::encryptString((string) (time() - 1)), 'email' => 'quick@example.com']));
+
+        $this->assertSame(1, $this->total());
+    }
+
+    #[Test]
     public function forms_sent_too_quickly_are_a_bots(): void
     {
         config(['reviews.spam.minimum_seconds' => 3]);
 
         // Drawn a second ago.
-        $this->post('/!/reviews/submit', $this->submission([Spam::TIME_FIELD => Crypt::encryptString((string) (time() - 1))]));
+        $this->post('/!/reviews/submit', $this->submission([Spam::TIME_FIELD => (new TimeToken((string) config('app.key')))->issue(time() - 1)]));
+        // A token signed with someone else's key.
+        $this->post('/!/reviews/submit', $this->submission([Spam::TIME_FIELD => (new TimeToken('another-key'))->issue(time() - 60), 'email' => 'f@example.com']));
         // No time at all, or one that's been made up.
         $this->post('/!/reviews/submit', $this->submission([Spam::TIME_FIELD => null, 'email' => 'b@example.com']));
         $this->post('/!/reviews/submit', $this->submission([Spam::TIME_FIELD => (string) (time() - 100), 'email' => 'c@example.com']));

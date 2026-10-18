@@ -401,7 +401,7 @@ class ReviewsTags extends Tags
 
     public static function stylesheetPath(): string
     {
-        return __DIR__.'/../../resources/css/reviews.css';
+        return dirname((new \ReflectionClass(\NineteenNinetyFour\Reviews\Core\Rating\Summary::class))->getFileName(), 3).'/resources/css/reviews.css';
     }
 
     protected function displayPart(string $part): string

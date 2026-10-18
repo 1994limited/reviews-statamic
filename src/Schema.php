@@ -2,6 +2,9 @@
 
 namespace NineteenNinetyFour\Reviews;
 
+use NineteenNinetyFour\Reviews\Core\Schema\SchemaBuilder;
+use NineteenNinetyFour\Reviews\Core\Schema\SchemaReview;
+use NineteenNinetyFour\Reviews\Core\Schema\Subject;
 use NineteenNinetyFour\Reviews\Integrations\Cargo;
 use Statamic\Contracts\Entries\Entry;
 
@@ -46,55 +49,30 @@ class Schema
         }
 
         $type = $type !== null && preg_match('/^[A-Za-z]{2,60}$/', $type) ? $type : $this->type($entry);
-        $url = $entry->absoluteUrl();
-
-        $data = [
-            '@context' => 'https://schema.org',
-            '@type' => $type,
-        ];
-
-        if ($id !== null && $id !== '') {
-            $data['@id'] = $id;
-        }
-
-        $data['name'] = (string) ($entry->get('title') ?? $entry->value('title') ?? '');
-
-        if ($url) {
-            $data['url'] = $url;
-        }
-
-        $data['aggregateRating'] = [
-            '@type' => 'AggregateRating',
-            'ratingValue' => round((float) $summary->average(), 2),
-            'bestRating' => 5,
-            'worstRating' => 1,
-            'ratingCount' => $summary->count(),
-            'reviewCount' => $summary->count(),
-        ];
-
         $limit = $reviews ?? max(0, (int) config('reviews.schema.reviews', 5));
 
-        if ($limit > 0) {
-            $data['review'] = $this->reviews->repository()
+        $latest = $limit > 0
+            ? $this->reviews->repository()
                 ->get(ReviewQuery::make()->entry($entryId)->site($site)->approved()->sort('newest'), $limit)
-                ->map(fn (Review $review) => array_filter([
-                    '@type' => 'Review',
-                    'author' => ['@type' => 'Person', 'name' => Reviews::displayName($review->name)],
-                    'datePublished' => $review->createdAt?->toDateString(),
-                    'name' => $review->title,
-                    'reviewBody' => $review->body,
-                    'reviewRating' => [
-                        '@type' => 'Rating',
-                        'ratingValue' => $review->rating,
-                        'bestRating' => 5,
-                        'worstRating' => 1,
-                    ],
-                ], fn ($value) => $value !== null && $value !== ''))
+                ->map(fn (Review $review) => new SchemaReview(
+                    rating: $review->rating,
+                    author: Reviews::displayName($review->name),
+                    date: $review->createdAt?->toDateString(),
+                    title: $review->title,
+                    body: $review->body,
+                ))
                 ->values()
-                ->all();
-        }
+                ->all()
+            : [];
 
-        return $data;
+        $subject = new Subject(
+            name: (string) ($entry->get('title') ?? $entry->value('title') ?? ''),
+            type: $type,
+            url: $entry->absoluteUrl() ?: null,
+            id: $id !== null && $id !== '' ? $id : null,
+        );
+
+        return SchemaBuilder::build($subject, $summary->core(), $latest);
     }
 
     /**
@@ -116,7 +94,7 @@ class Schema
      */
     public static function encode(array $data, bool $pretty = false): string
     {
-        return (string) json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | ($pretty ? JSON_PRETTY_PRINT : 0));
+        return SchemaBuilder::encode($data, $pretty);
     }
 
     /**

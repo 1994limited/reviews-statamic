@@ -66,7 +66,7 @@ Visitors choose the order with the menu above the reviews, and see one rating's 
 <link rel="stylesheet" href="https://example.com/!/reviews/reviews.css?v=…">
 ```
 
-The address is the addon's own, and the `?v=` changes when the file does, so browsers cache it for a year and pick up a new version after you update Reviews. To load it some other way (in a CSS build, or from a CDN), `{{ reviews:styles_url }}` is the address on its own, and the file itself is `vendor/1994/reviews-statamic/resources/css/reviews.css`.
+The address is the addon's own, and the `?v=` changes when the file does, so browsers cache it for a year and pick up a new version after you update Reviews. To load it some other way (in a CSS build, or from a CDN), `{{ reviews:styles_url }}` is the address on its own, and the file itself is `vendor/1994/reviews-core/resources/css/reviews.css` (in the core package Reviews shares with its Craft version).
 
 ## Changing the look
 

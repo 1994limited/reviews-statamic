@@ -129,7 +129,7 @@ class ServiceProvider extends AddonServiceProvider
         $this->publishes([__DIR__.'/../database/migrations' => database_path('migrations')], 'reviews-migrations');
         $this->publishes([__DIR__.'/../lang' => $this->app->langPath('vendor/reviews')], 'reviews-translations');
         // The default styles, to build into your own CSS and edit.
-        $this->publishes([__DIR__.'/../resources/css/reviews.css' => resource_path('css/reviews.css')], 'reviews-css');
+        $this->publishes([ReviewsTags::stylesheetPath() => resource_path('css/reviews.css')], 'reviews-css');
 
         // The database driver's tables are migrated with the site's own
         // migrations. With the file driver they aren't made at all.

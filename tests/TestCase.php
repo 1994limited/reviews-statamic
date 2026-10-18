@@ -4,7 +4,7 @@ namespace NineteenNinetyFour\Reviews\Tests;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Crypt;
+use NineteenNinetyFour\Reviews\Core\Spam\TimeToken;
 use NineteenNinetyFour\Reviews\Review;
 use NineteenNinetyFour\Reviews\Reviews;
 use NineteenNinetyFour\Reviews\ReviewStatus;
@@ -173,7 +173,7 @@ abstract class TestCase extends AddonTestCase
             'body' => 'I enjoyed this a lot.',
             'name' => 'Sam Reader',
             'email' => 'sam@example.com',
-            Spam::TIME_FIELD => Crypt::encryptString((string) (time() - 60)),
+            Spam::TIME_FIELD => (new TimeToken((string) config('app.key')))->issue(time() - 60),
         ];
     }
 

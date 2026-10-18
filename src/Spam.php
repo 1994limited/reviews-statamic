@@ -6,11 +6,12 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use InvalidArgumentException;
-use NineteenNinetyFour\Reviews\Captcha\HCaptcha;
-use NineteenNinetyFour\Reviews\Captcha\Recaptcha;
-use NineteenNinetyFour\Reviews\Captcha\RecaptchaV3;
-use NineteenNinetyFour\Reviews\Captcha\Turnstile;
+use NineteenNinetyFour\Reviews\Captcha\CoreCaptcha;
 use NineteenNinetyFour\Reviews\Contracts\Captcha;
+use NineteenNinetyFour\Reviews\Core\Captcha\Captchas;
+use NineteenNinetyFour\Reviews\Core\Spam\Links;
+use NineteenNinetyFour\Reviews\Core\Spam\TimeToken;
+use NineteenNinetyFour\Reviews\Http\LaravelClient;
 
 /**
  * Telling people from bots, without asking people to do anything:
@@ -42,7 +43,7 @@ class Spam
     public function fields(): string
     {
         $honeypot = e($this->honeypot());
-        $time = e(Crypt::encryptString((string) time()));
+        $time = e($this->timeToken()->issue());
 
         return '<div style="position:absolute!important;left:-10000px!important;width:1px;height:1px;overflow:hidden" aria-hidden="true">'
             .'<label>'.e(__('reviews::messages.honeypot')).' <input type="text" name="'.$honeypot.'" value="" tabindex="-1" autocomplete="off"></label>'
@@ -57,6 +58,11 @@ class Spam
     public function script(): string
     {
         return '<script>(function(){var t=Date.now();document.querySelectorAll("[data-reviews-opened]").forEach(function(i){var f=i.form;if(f&&!f.dataset.reviewsTimed){f.dataset.reviewsTimed=1;f.addEventListener("submit",function(){f.querySelectorAll("[data-reviews-opened]").forEach(function(x){x.value=String(Math.round((Date.now()-t)/1000))})})}})})();</script>';
+    }
+
+    protected function timeToken(): TimeToken
+    {
+        return new TimeToken((string) config('app.key'));
     }
 
     /**
@@ -83,10 +89,18 @@ class Spam
             return true;
         }
 
-        // Seconds since the form was drawn on the server. A form without
-        // the field (or with one that's been tampered with) is a bot's.
+        // Seconds since the form was drawn on the server, signed. A form
+        // without the field (or with one that's been tampered with) is a
+        // bot's.
+        $token = $request->input(self::TIME_FIELD);
+
+        if (is_string($token) && str_contains($token, '.') && ctype_digit(strstr($token, '.', true))) {
+            return $this->timeToken()->tooQuick($token, null, $minimum);
+        }
+
+        // A form drawn before 1.2 carries the time encrypted.
         try {
-            $drawn = Crypt::decryptString((string) $request->input(self::TIME_FIELD));
+            $drawn = Crypt::decryptString((string) $token);
         } catch (DecryptException) {
             return true;
         }
@@ -100,13 +114,8 @@ class Spam
     |--------------------------------------------------------------------------
     */
 
-    /** The drivers that come with the addon. */
-    public const CAPTCHAS = [
-        'turnstile' => Turnstile::class,
-        'hcaptcha' => HCaptcha::class,
-        'recaptcha' => Recaptcha::class,
-        'recaptcha_v3' => RecaptchaV3::class,
-    ];
+    /** The drivers that come with the addon, from reviews-core. */
+    public const CAPTCHAS = ['turnstile', 'hcaptcha', 'recaptcha', 'recaptcha_v3'];
 
     /**
      * The captcha the form uses, or null for none.
@@ -120,15 +129,17 @@ class Spam
             return null;
         }
 
-        $class = self::CAPTCHAS[$driver] ?? $driver;
+        // The addon's own drivers need both keys; without them, there's no captcha.
+        if (Captchas::builtIn($driver)) {
+            $captcha = Captchas::make($driver, (string) ($config['site_key'] ?? ''), (string) ($config['secret_key'] ?? ''), new LaravelClient(10), $config);
+
+            return $captcha ? new CoreCaptcha($captcha) : null;
+        }
+
+        $class = $driver;
 
         if (! class_exists($class) || ! is_subclass_of($class, Captcha::class)) {
             throw new InvalidArgumentException("Unknown reviews captcha [{$driver}]. Use turnstile, hcaptcha, recaptcha, recaptcha_v3, or a class implementing ".Captcha::class.'.');
-        }
-
-        // The addon's own drivers need both keys; without them, there's no captcha.
-        if (isset(self::CAPTCHAS[$driver]) && (! filled($config['site_key'] ?? null) || ! filled($config['secret_key'] ?? null))) {
-            return null;
         }
 
         return app()->makeWith($class, [
@@ -163,10 +174,6 @@ class Spam
      */
     public static function links(?string $text): int
     {
-        if ($text === null || $text === '') {
-            return 0;
-        }
-
-        return preg_match_all('~(https?://|www\.|\b[a-z0-9-]+\.(com|net|org|ru|xyz|top|info|io|co|biz)\b)~i', $text);
+        return Links::count($text);
     }
 }

@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use NineteenNinetyFour\Reviews\Contracts\ReviewRepository;
+use NineteenNinetyFour\Reviews\Core\Names\DisplayName;
 use NineteenNinetyFour\Reviews\Events\ReviewApproved;
 use NineteenNinetyFour\Reviews\Events\ReviewDeleted;
 use NineteenNinetyFour\Reviews\Events\ReviewRejected;
@@ -213,21 +214,7 @@ class Reviews
      */
     public static function displayName(string $name): string
     {
-        $name = trim(preg_replace('/\s+/u', ' ', $name) ?? '');
-
-        if ($name === '' || Settings::string('name_display', 'short') !== 'short') {
-            return $name;
-        }
-
-        $parts = explode(' ', $name);
-
-        if (count($parts) === 1) {
-            return $name;
-        }
-
-        $last = mb_substr((string) end($parts), 0, 1);
-
-        return $parts[0].' '.mb_strtoupper($last).'.';
+        return DisplayName::format($name, Settings::string('name_display', 'short') === 'short' ? DisplayName::SHORT : DisplayName::FULL);
     }
 
     /*

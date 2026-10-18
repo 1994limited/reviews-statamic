@@ -2,6 +2,7 @@
 
 namespace NineteenNinetyFour\Reviews;
 
+use NineteenNinetyFour\Reviews\Core\Rating\Stars;
 use Statamic\Contracts\Assets\Asset;
 use Statamic\Contracts\Auth\User;
 
@@ -104,16 +105,7 @@ class Presenter
      */
     public static function stars(float|int $rating): array
     {
-        $stars = [];
-
-        for ($i = 1; $i <= 5; $i++) {
-            $part = $rating - ($i - 1);
-            $type = $part >= 0.75 ? 'full' : ($part >= 0.25 ? 'half' : 'empty');
-
-            $stars[] = ['type' => $type, 'full' => $type === 'full', 'half' => $type === 'half', 'empty' => $type === 'empty', 'number' => $i];
-        }
-
-        return $stars;
+        return Stars::for($rating);
     }
 
     public static function text(?string $text): ?string
