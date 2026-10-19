@@ -4,7 +4,7 @@
 
 For each review: the rating, title and text, the name and email address given (or the user account), the site it was written on, and, with Cargo, the order that verified it. Email addresses are never shown on the site.
 
-**Not kept**: IP addresses and browser details. The rate limits use the IP address, but only in your cache, for as long as the limit lasts. "Helpful" votes are kept as a one-way hash of the voter's account, or of a random cookie (`reviews_voter`, for a year) for guests. Review request opt-outs are kept as a hash of the address.
+**Not kept**: IP addresses and browser details. The rate limits use the IP address, but only in your cache, for as long as the limit lasts. "Helpful" votes are kept as a one-way hash of the voter's account or, for guests, of a cookie (`reviews_voter`, for a year). That cookie holds a token made from the guest's IP address, browser and language, keyed with your site's secret key, so someone who clears their cookies can't vote twice. The address and browser details themselves aren't kept. Review request opt-outs are kept as a hash of the address.
 
 **Imported and synced reviews** keep what the platform gave: the reviewer's name, and their email address if it was in the export. Sync sources' keys are kept encrypted with your app key ([Import and sync](import-and-sync.md#syncing)).
 
