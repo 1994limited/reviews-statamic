@@ -7,12 +7,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use NineteenNinetyFour\Reviews\Contracts\RequestLog;
 use NineteenNinetyFour\Reviews\DuplicateReview;
 use NineteenNinetyFour\Reviews\Http\ReadsText;
 use NineteenNinetyFour\Reviews\Integrations\Cargo;
+use NineteenNinetyFour\Reviews\Links;
 use NineteenNinetyFour\Reviews\Presenter;
 use NineteenNinetyFour\Reviews\ReviewException;
 use NineteenNinetyFour\Reviews\Reviews;
@@ -78,6 +78,18 @@ class ActionsController
 
         return response((string) file_get_contents($path), 200, [
             'Content-Type' => 'text/css; charset=utf-8',
+            'Cache-Control' => $versioned ? 'public, max-age=31536000, immutable' : 'public, max-age=300',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    public function script(Request $request): Response
+    {
+        $path = Spam::scriptPath();
+        $versioned = $request->query('v') === substr((string) md5_file($path), 0, 12);
+
+        return response((string) file_get_contents($path), 200, [
+            'Content-Type' => 'text/javascript; charset=utf-8',
             'Cache-Control' => $versioned ? 'public, max-age=31536000, immutable' : 'public, max-age=300',
             'X-Content-Type-Options' => 'nosniff',
         ]);
@@ -152,7 +164,7 @@ class ActionsController
      */
     public function optOut(Request $request): Response
     {
-        $email = (string) $this->text($request, 'email', 254);
+        $email = Links::optOutEmail($request);
 
         return response()->view('reviews::opt-out', [
             'email' => $email,
@@ -163,7 +175,7 @@ class ActionsController
 
     public function confirmOptOut(Request $request, RequestLog $log): Response
     {
-        $email = (string) $this->text($request, 'email', 254);
+        $email = Links::optOutEmail($request);
 
         if ($email !== '') {
             $log->optOut($email);
@@ -187,7 +199,10 @@ class ActionsController
         $cookie = null;
 
         if (! is_string($token) || ! preg_match('/^[A-Za-z0-9]{32}$/', $token)) {
-            $token = Str::random(32);
+            // A first vote, or someone who drops cookies: the same browser on
+            // the same connection gets the same token, so dropping the cookie
+            // doesn't make a new voter.
+            $token = substr(hash_hmac('sha256', 'voter|'.$request->ip().'|'.$request->userAgent().'|'.$request->header('Accept-Language'), (string) config('app.key')), 0, 32);
             $cookie = Cookie::make(self::VOTER_COOKIE, $token, 60 * 24 * 365, httpOnly: true, sameSite: 'lax');
         }
 

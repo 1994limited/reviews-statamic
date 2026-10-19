@@ -30,6 +30,7 @@ Each review:
 | `name` | As the settings show names ("Jo B."). Escaped. |
 | `verified` | Bought from you (Cargo). |
 | `date`, `updated` | Dates; use the `format` modifier. |
+| `date_long` | The date in full, as the site's language writes it: "19 October 2026". |
 | `reply`, `has_reply`, `reply_date` | The site's public reply. |
 | `helpful` | How many found it helpful. |
 | `photos` | Approved photos: `url`, `id`, `alt`, `width`, `height`. |

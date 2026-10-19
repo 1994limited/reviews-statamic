@@ -262,7 +262,7 @@ class ReviewsController extends CpController
             'rating' => $review->rating,
             'title' => $review->title,
             'excerpt' => $review->body !== null ? mb_strimwidth(preg_replace('/\s+/u', ' ', $review->body) ?? '', 0, 160, '…') : null,
-            'name' => $review->name,
+            'name' => Reviews::fullName($review->name),
             'verified' => $review->verified,
             'source' => $review->source !== null ? Imports::sourceLabel($review->source) : null,
             'status' => $review->status->value,

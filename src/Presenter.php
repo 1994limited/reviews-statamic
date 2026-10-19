@@ -2,11 +2,14 @@
 
 namespace NineteenNinetyFour\Reviews;
 
+use DateTimeInterface;
+use IntlDateFormatter;
 use NineteenNinetyFour\Reviews\Core\Import\Formats;
 use NineteenNinetyFour\Reviews\Core\Import\Values;
 use NineteenNinetyFour\Reviews\Core\Rating\Stars;
 use Statamic\Contracts\Assets\Asset;
 use Statamic\Contracts\Auth\User;
+use Statamic\Facades\Site;
 
 /**
  * Reviews and their numbers as templates use them. Everything a visitor
@@ -44,6 +47,7 @@ class Presenter
             'name' => e(Reviews::displayName($review->name)),
             'verified' => $review->verified,
             'date' => $review->createdAt,
+            'date_long' => static::longDate($review->createdAt),
             'updated' => $review->updatedAt,
             'reply' => static::paragraphs($review->reply),
             'has_reply' => $review->reply !== null,
@@ -115,6 +119,28 @@ class Presenter
      *
      * @return array<int, array{type: string, full: bool, half: bool, empty: bool}>
      */
+    /**
+     * A date as the site's language writes it in full: "19 October 2026",
+     * "19. listopada 2026.". Without PHP's intl extension, "19 October 2026".
+     */
+    public static function longDate(?DateTimeInterface $date): string
+    {
+        if (! $date) {
+            return '';
+        }
+
+        if (class_exists(IntlDateFormatter::class)) {
+            $formatter = new IntlDateFormatter(Site::current()->locale(), IntlDateFormatter::LONG, IntlDateFormatter::NONE, $date->getTimezone());
+            $formatted = $formatter->format($date);
+
+            if (is_string($formatted) && $formatted !== '') {
+                return $formatted;
+            }
+        }
+
+        return $date->format('j F Y');
+    }
+
     public static function stars(float|int $rating): array
     {
         return Stars::for($rating);

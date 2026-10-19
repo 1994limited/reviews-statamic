@@ -5,6 +5,7 @@ namespace NineteenNinetyFour\Reviews\Tests\Feature;
 use NineteenNinetyFour\Reviews\Contracts\RequestLog;
 use NineteenNinetyFour\Reviews\Database\EloquentReviewRepository;
 use NineteenNinetyFour\Reviews\ReviewQuery;
+use NineteenNinetyFour\Reviews\Reviews;
 use NineteenNinetyFour\Reviews\Stache\StacheReviewRepository;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -93,7 +94,8 @@ class CommandsTest extends TestCase
             ->assertSuccessful();
 
         $found = $this->reviews()->find($kept->id);
-        $this->assertSame('A customer', $found->name);
+        $this->assertSame('', $found->name);
+        $this->assertSame('A customer', Reviews::displayName($found->name));
         $this->assertNull($found->email);
         $this->assertSame('Still useful', $found->body);
         $this->assertTrue(app(RequestLog::class)->optedOut('jo@example.com'));
@@ -124,7 +126,8 @@ class CommandsTest extends TestCase
         $user->delete();
 
         $found = $this->reviews()->find($review->id);
-        $this->assertSame('A customer', $found->name);
+        $this->assertSame('', $found->name);
+        $this->assertSame('A customer', Reviews::displayName($found->name));
         $this->assertNull($found->user);
         $this->assertNull($found->email);
     }

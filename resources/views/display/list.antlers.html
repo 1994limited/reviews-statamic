@@ -34,7 +34,7 @@
                     {{ /if }}
                     <p class="reviews-ui__by reviews-ui__muted">
                         <strong>{{ name }}</strong>
-                        <time datetime="{{ date format="Y-m-d" }}">{{ date format="j F Y" }}</time>
+                        <time datetime="{{ date format="Y-m-d" }}">{{ date_long }}</time>
                         {{ if verified }}<span class="reviews-ui__verified">✓ {{ trans key="reviews::messages.display.verified" }}</span>{{ /if }}
                         {{ if source }}<span class="reviews-ui__source">{{ trans key="reviews::messages.import.from" :platform="source" }}{{ if source_url }} · <a href="{{ source_url }}" rel="nofollow noopener" target="_blank">{{ trans key="reviews::messages.import.see_it" }}</a>{{ /if }}</span>{{ /if }}
                     </p>

@@ -2,6 +2,7 @@
 
 namespace NineteenNinetyFour\Reviews;
 
+use Closure;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -214,7 +215,11 @@ class Submissions
 
         if ($photos) {
             $rules['photos'] = ['nullable', 'array', 'max:'.max(0, $this->photos->max() - max(0, $kept))];
-            $rules['photos.*'] = ['file', 'image', 'mimes:'.implode(',', Photos::TYPES), 'max:'.$this->photos->maxSize()];
+            $rules['photos.*'] = ['file', 'image', 'mimes:'.implode(',', Photos::TYPES), 'max:'.$this->photos->maxSize(), function (string $attribute, mixed $value, Closure $fail) {
+                if ($value instanceof UploadedFile && ! $this->photos->readable($value->getRealPath())) {
+                    $fail(__('reviews::messages.photo_unreadable', ['name' => $value->getClientOriginalName()]));
+                }
+            }];
         }
 
         $attributes = ['rating' => __('reviews::messages.fields.rating'), 'title' => __('reviews::messages.fields.title'), 'body' => __('reviews::messages.fields.body'), 'name' => __('reviews::messages.fields.name'), 'email' => __('reviews::messages.fields.email'), 'photos' => __('reviews::messages.fields.photos'), 'photos.*' => __('reviews::messages.fields.photo')];
@@ -284,8 +289,9 @@ class Submissions
     {
         $name = trim((string) ($user->name() ?? ''));
 
+        // Empty shows as "A customer", in the visitor's language.
         if ($name === '' || $name === $user->email()) {
-            return (string) __('reviews::messages.anonymous');
+            return '';
         }
 
         return mb_substr($name, 0, max(1, (int) config('reviews.form.name_limit', 60)));

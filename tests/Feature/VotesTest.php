@@ -2,7 +2,9 @@
 
 namespace NineteenNinetyFour\Reviews\Tests\Feature;
 
+use Illuminate\Support\Facades\Queue;
 use NineteenNinetyFour\Reviews\Http\Controllers\ActionsController;
+use NineteenNinetyFour\Reviews\Jobs\RefreshAfterVotes;
 use NineteenNinetyFour\Reviews\ReviewStatus;
 use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -81,5 +83,35 @@ class VotesTest extends TestCase
         $this->post("/!/reviews/{$review->id}/helpful");
 
         $this->assertEquals(2, $this->reviews()->summary('book')->average());
+    }
+
+    #[Test]
+    public function dropping_the_cookie_doesnt_make_a_new_voter(): void
+    {
+        $review = $this->review();
+
+        $this->postJson("/!/reviews/{$review->id}/helpful")->assertJsonPath('helpful', 1);
+        $this->postJson("/!/reviews/{$review->id}/helpful")->assertJsonPath('helpful', 1);
+
+        // Another browser on the same connection is someone else.
+        $this->withHeader('User-Agent', 'Another browser')->postJson("/!/reviews/{$review->id}/helpful")->assertJsonPath('helpful', 2);
+    }
+
+    #[Test]
+    public function votes_clear_the_page_once_for_a_few_minutes(): void
+    {
+        config(['queue.default' => 'database']);
+        Queue::fake();
+
+        foreach (['a', 'b', 'c'] as $voter) {
+            $this->assertTrue($this->reviews()->vote($this->reviews()->find($this->review()->id), $voter));
+        }
+
+        Queue::assertPushed(RefreshAfterVotes::class, 1);
+
+        // Once it's run, the next vote waits afresh.
+        Queue::pushed(RefreshAfterVotes::class)->first()->handle($this->reviews());
+        $this->reviews()->vote($this->reviews()->find($this->review()->id), 'd');
+        Queue::assertPushed(RefreshAfterVotes::class, 2);
     }
 }

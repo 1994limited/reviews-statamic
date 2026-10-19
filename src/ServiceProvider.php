@@ -30,6 +30,7 @@ use NineteenNinetyFour\Reviews\Stache\StacheReviewRepository;
 use NineteenNinetyFour\Reviews\Tags\ReviewsTags;
 use NineteenNinetyFour\Reviews\Widgets\PendingReviews;
 use Statamic\Events\AddonSettingsSaved;
+use Statamic\Events\EntryDeleted;
 use Statamic\Events\UserDeleted;
 use Statamic\Facades\CP\Nav;
 use Statamic\Facades\Permission;
@@ -151,6 +152,10 @@ class ServiceProvider extends AddonServiceProvider
         $this->registerSchedule();
 
         Event::listen(AddonSettingsSaved::class, fn () => Settings::flush());
+
+        Event::listen(EntryDeleted::class, function (EntryDeleted $event) {
+            app(Reviews::class)->entryDeleted($event->entry);
+        });
 
         Event::listen(UserDeleted::class, function (UserDeleted $event) {
             app(Reviews::class)->forget($event->user->email(), (string) $event->user->id(), config('reviews.deleted_users') === 'delete');

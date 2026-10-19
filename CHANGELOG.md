@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.2 (2026-10-19)
+
+### Fixed
+- Deleting an entry left its reviews, and their photos, behind. They're now deleted with it (with separate sites, a deleted localisation takes its own site's reviews). Reviews of entries deleted before 1.2.2 are untouched.
+- The "no more emails like this" link in review requests had the customer's email address in it, so it ended up in access logs and analytics. The address is now encrypted; links in emails already sent still work.
+- Every "helpful" vote cleared the entry's statically cached pages. With a queue worker, they're now cleared once for every vote in five minutes. Someone who drops cookies no longer counts as a new voter each time.
+- A photo that passed the upload checks but couldn't be decoded was dropped without a word: the reviewer is now told.
+- Dates in the ready-made list follow the site's locale ("19. listopada 2026." on a Croatian site), with PHP's intl extension. Also as `date_long` in the tags.
+- A deleted user's reviews show "A customer" in the visitor's language, not the one active when they were deleted (from now on: reviews anonymised before keep the words they were given).
+- Review request and reviewer emails are sent in the language of their site, whatever runs the scheduler or the queue.
+- The form's time check is a script file (`/!/reviews/reviews.js`), not inline, so it runs under a strict Content-Security-Policy.
+
 ## 1.2.1 (2026-10-18)
 
 ### Fixed

@@ -348,4 +348,17 @@ class DisplayTest extends TestCase
         $this->assertStringContainsString('From Blade', $html);
         $this->assertStringContainsString('class="reviews-ui__form"', $html);
     }
+
+    #[Test]
+    public function dates_are_written_out_and_the_time_check_is_a_file(): void
+    {
+        $this->review(['created_at' => '2026-10-19 12:00:00']);
+        $html = $this->render();
+
+        $this->assertStringContainsString('19 October 2026', $html);
+        $this->assertMatchesRegularExpression('#<script src="[^"]+/!/reviews/reviews\.js\?v=[0-9a-f]{12}"></script>#', $html);
+        $this->assertStringNotContainsString('reviewsTimed', $html);
+
+        $this->get('/!/reviews/reviews.js')->assertOk()->assertHeader('Content-Type', 'text/javascript; charset=utf-8')->assertSee('reviewsTimed', false);
+    }
 }

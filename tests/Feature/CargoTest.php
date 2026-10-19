@@ -6,6 +6,7 @@ use DuncanMcClean\Cargo\Facades\Order;
 use DuncanMcClean\Cargo\Orders\OrderStatus;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\URL;
 use NineteenNinetyFour\Reviews\Contracts\RequestLog;
 use NineteenNinetyFour\Reviews\Integrations\Cargo;
 use NineteenNinetyFour\Reviews\Links;
@@ -208,6 +209,8 @@ class CargoTest extends CargoTestCase
             $this->assertStringContainsString('signature=', $mail->actionUrl);
             $this->assertStringContainsString('Review Second Book', implode(' ', array_map('strval', $mail->outroLines)));
             $this->assertStringContainsString('/!/reviews/opt-out', (string) $mail->salutation);
+            $this->assertStringNotContainsString('ada%40', (string) $mail->salutation);
+            $this->assertSame('en', $notification->locale);
 
             return true;
         });
@@ -251,6 +254,15 @@ class CargoTest extends CargoTestCase
         $this->assertTrue(app(RequestLog::class)->optedOut('ADA@example.com'));
 
         $this->post('/!/reviews/opt-out?email=sam@example.com')->assertForbidden();
+
+        // The address isn't in the link.
+        $this->assertStringNotContainsString('ada', $url);
+
+        // Links in emails sent before 1.2.2 still work.
+        $old = URL::signedRoute('statamic.reviews.opt-out', ['email' => 'bea@example.com']);
+        $this->get($old)->assertOk()->assertSee('bea@example.com');
+        $this->post($old)->assertOk();
+        $this->assertTrue(app(RequestLog::class)->optedOut('bea@example.com'));
 
         $this->artisan('reviews:send-requests');
         Notification::assertNothingSent();

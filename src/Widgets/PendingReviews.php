@@ -40,7 +40,7 @@ class PendingReviews extends Widget
                 'id' => $review->id,
                 'rating' => $review->rating,
                 'title' => $review->title,
-                'name' => $review->name,
+                'name' => Reviews::fullName($review->name),
                 'entry_title' => (string) ($reviews->entry($review->entry)?->get('title') ?? ''),
                 'created_ago' => $review->createdAt?->diffForHumans(),
                 'url' => cp_route('reviews.show', $review->id),

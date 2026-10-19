@@ -5,6 +5,7 @@ namespace NineteenNinetyFour\Reviews\Commands;
 use DuncanMcClean\Cargo\Contracts\Orders\Order;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Traits\Localizable;
 use NineteenNinetyFour\Reviews\Contracts\RequestLog;
 use NineteenNinetyFour\Reviews\Integrations\Cargo;
 use NineteenNinetyFour\Reviews\Links;
@@ -23,6 +24,7 @@ use Throwable;
  */
 class SendRequests extends Command
 {
+    use Localizable;
     use RunsInPlease;
 
     protected $signature = 'reviews:send-requests
@@ -60,7 +62,9 @@ class SendRequests extends Command
                 continue;
             }
 
-            $details = $this->details($order, $cargo, $log, $reviews);
+            // In the order's site's language, whatever runs the command.
+            $language = ($order->site() ?? Site::default())->lang();
+            $details = $this->withLocale($language, fn () => $this->details($order, $cargo, $log, $reviews));
 
             if ($details === null) {
                 $dry || $log->markSent($id);
@@ -76,7 +80,7 @@ class SendRequests extends Command
             }
 
             try {
-                Notification::route('mail', $details['email'])->notify(new ReviewRequest($details));
+                Notification::route('mail', $details['email'])->notify((new ReviewRequest($details))->locale($language));
                 $log->markSent($id);
                 $sent++;
             } catch (Throwable $e) {

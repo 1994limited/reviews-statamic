@@ -57,11 +57,17 @@ class Spam
     }
 
     /**
-     * Marks when the page was opened, for the time trap on cached pages.
+     * Marks when the page was opened, for the time trap on cached pages. A
+     * file, not inline, so it runs under a strict Content-Security-Policy.
      */
     public function script(): string
     {
-        return '<script>(function(){var t=Date.now();document.querySelectorAll("[data-reviews-opened]").forEach(function(i){var f=i.form;if(f&&!f.dataset.reviewsTimed){f.dataset.reviewsTimed=1;f.addEventListener("submit",function(){f.querySelectorAll("[data-reviews-opened]").forEach(function(x){x.value=String(Math.round((Date.now()-t)/1000))})})}})})();</script>';
+        return '<script src="'.e(url('!/reviews/reviews.js').'?v='.substr((string) md5_file(static::scriptPath()), 0, 12)).'"></script>';
+    }
+
+    public static function scriptPath(): string
+    {
+        return dirname(__DIR__).'/resources/frontend/reviews.js';
     }
 
     protected function timeToken(): TimeToken

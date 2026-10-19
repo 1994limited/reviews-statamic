@@ -11,6 +11,7 @@ use NineteenNinetyFour\Reviews\Events\ReviewApproved;
 use NineteenNinetyFour\Reviews\Events\ReviewDeleted;
 use NineteenNinetyFour\Reviews\Events\ReviewRejected;
 use NineteenNinetyFour\Reviews\Events\ReviewReplied;
+use NineteenNinetyFour\Reviews\Jobs\RefreshAfterVotes;
 use Statamic\Contracts\Auth\User;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Facades\Entry;
@@ -214,7 +215,18 @@ class Reviews
      */
     public static function displayName(string $name): string
     {
-        return DisplayName::format($name, Settings::string('name_display', 'short') === 'short' ? DisplayName::SHORT : DisplayName::FULL);
+        $shown = DisplayName::format($name, Settings::string('name_display', 'short') === 'short' ? DisplayName::SHORT : DisplayName::FULL);
+
+        return $shown !== '' ? $shown : static::fullName($name);
+    }
+
+    /**
+     * A reviewer's whole name, or "A customer", in the visitor's language,
+     * when there isn't one (a deleted user's, say).
+     */
+    public static function fullName(string $name): string
+    {
+        return trim($name) !== '' ? $name : (string) __('reviews::messages.anonymous');
     }
 
     /*
@@ -358,12 +370,51 @@ class Reviews
 
     public function delete(Review $review): void
     {
+        // The review first: if that fails, its photos are still there.
+        $this->repository->delete($review);
         app(Photos::class)->delete($review);
 
-        $this->repository->delete($review);
         $this->changed($review->entry);
 
         ReviewDeleted::dispatch($review);
+    }
+
+    /** How long "helpful" votes wait to clear the pages they're on, together. */
+    public const VOTE_REFRESH_SECONDS = 300;
+
+    /**
+     * A vote changes only the count beside its button, so the entry's cached
+     * pages are cleared once for every vote in the next few minutes, not for
+     * each. Without a queue worker (the sync driver), each vote clears them.
+     */
+    protected function refreshAfterVote(string $entry): void
+    {
+        if (config('queue.default') === 'sync') {
+            $this->changed($entry, summary: false);
+
+            return;
+        }
+
+        $key = static::voteRefreshKey($entry);
+        $token = Str::random(16);
+
+        if (! Cache::add($key, $token, self::VOTE_REFRESH_SECONDS + 60)) {
+            return;
+        }
+
+        try {
+            RefreshAfterVotes::dispatch($entry, $token)->delay(self::VOTE_REFRESH_SECONDS);
+        } catch (Throwable $e) {
+            // Not queued: let the next vote try, and clear them now.
+            Cache::forget($key);
+            report($e);
+            $this->changed($entry, summary: false);
+        }
+    }
+
+    public static function voteRefreshKey(string $entry): string
+    {
+        return 'reviews:vote-refresh:'.sha1($entry);
     }
 
     /**
@@ -378,10 +429,50 @@ class Reviews
         $voted = $this->repository->vote($review, $voter);
 
         if ($voted) {
-            $this->changed($review->entry, summary: false);
+            $this->refreshAfterVote($review->entry);
         }
 
         return $voted;
+    }
+
+    /**
+     * An entry was deleted: its reviews go too, with their photos. A
+     * deleted localisation takes its site's reviews when each site has its
+     * own.
+     */
+    public function entryDeleted(EntryContract $entry): int
+    {
+        $hasOrigin = false;
+
+        try {
+            $hasOrigin = $entry->hasOrigin();
+        } catch (Throwable) {
+        }
+
+        if ($hasOrigin && Settings::string('sites', 'shared') !== 'separate') {
+            return 0;
+        }
+
+        $query = ReviewQuery::make()->entry($this->entryId($entry));
+
+        if ($hasOrigin) {
+            $query->site($entry->locale());
+        }
+
+        $deleted = 0;
+
+        foreach ($this->repository->get($query) as $review) {
+            try {
+                $this->delete($review);
+                $deleted++;
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+
+        $this->forgetSummary($this->entryId($entry));
+
+        return $deleted;
     }
 
     /**
@@ -409,7 +500,8 @@ class Reviews
                 continue;
             }
 
-            $review->name = (string) __('reviews::messages.anonymous');
+            // Left empty: "A customer" is shown in each visitor's language.
+            $review->name = '';
             $review->email = null;
             $review->user = null;
             $this->save($review);

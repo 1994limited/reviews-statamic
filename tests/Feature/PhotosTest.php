@@ -15,6 +15,7 @@ use NineteenNinetyFour\Reviews\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades\Asset;
 use Statamic\Facades\AssetContainer;
+use Statamic\Facades\Entry;
 
 class PhotosTest extends TestCase
 {
@@ -166,6 +167,33 @@ class PhotosTest extends TestCase
 
         $this->assertSame([$pending], $this->reviews()->find($review->id)->photos);
         Storage::disk('local')->assertExists($pending['path']);
+    }
+
+    #[Test]
+    public function a_photo_that_cant_be_read_is_an_error_not_dropped(): void
+    {
+        // A good header, cut short.
+        $whole = UploadedFile::fake()->image('holiday.png', 800, 600);
+        $cut = UploadedFile::fake()->createWithContent('holiday.png', substr((string) file_get_contents($whole->getRealPath()), 0, 120));
+        $this->assertNotFalse(@getimagesize($cut->getRealPath()));
+
+        $this->post('/!/reviews/submit', $this->submission(['photos' => [$cut]]))
+            ->assertSessionHasErrors(['photos.0' => '“holiday.png” couldn’t be read as a photo. Try saving it again as a JPEG.'], null, 'reviews');
+        $this->assertSame(0, $this->reviews()->repository()->count(ReviewQuery::make()));
+    }
+
+    #[Test]
+    public function deleting_the_entry_deletes_its_reviews_and_their_photos(): void
+    {
+        $this->post('/!/reviews/submit', $this->submission(['photos' => [UploadedFile::fake()->image('a.jpg')]]));
+        $this->reviews()->approve($this->submitted());
+        $this->review(['status' => ReviewStatus::Pending]);
+
+        Entry::find('book')->delete();
+
+        $this->assertSame(0, $this->reviews()->repository()->count(ReviewQuery::make()));
+        $this->assertSame([], Storage::disk('assets')->allFiles('reviews'));
+        $this->assertSame([], Storage::disk('local')->allFiles('reviews/pending'));
     }
 
     #[Test]

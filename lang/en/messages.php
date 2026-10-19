@@ -23,6 +23,7 @@ return [
 
     'anonymous' => 'A customer',
     'honeypot' => 'Leave this empty',
+    'photo_unreadable' => '“:name” couldn’t be read as a photo. Try saving it again as a JPEG.',
     'photo_alt' => 'Photo from :name’s review',
     'helpful' => 'Helpful',
     'delete' => 'Delete my review',

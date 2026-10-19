@@ -4,6 +4,7 @@ namespace NineteenNinetyFour\Reviews\Listeners;
 
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Traits\Localizable;
 use NineteenNinetyFour\Reviews\Events\ReviewApproved;
 use NineteenNinetyFour\Reviews\Events\ReviewReplied;
 use NineteenNinetyFour\Reviews\Events\ReviewSubmitted;
@@ -22,6 +23,8 @@ use Throwable;
  */
 class Notifier
 {
+    use Localizable;
+
     public function subscribe(Dispatcher $events): array
     {
         return [
@@ -47,7 +50,7 @@ class Notifier
         $this->send(fn () => Notification::route('mail', $to->all())->notify(new NewReview($this->details($review) + [
             'title' => $review->title,
             'body' => $review->body,
-            'name' => $review->name,
+            'name' => Reviews::fullName($review->name),
             'rating' => $review->rating,
             'verified' => $review->verified,
             'approved' => $review->isApproved(),
@@ -63,7 +66,9 @@ class Notifier
             return;
         }
 
-        $this->send(fn () => Notification::route('mail', $review->email)->notify(new ApprovedEmail($this->details($review))));
+        $language = $this->language($review);
+
+        $this->send(fn () => Notification::route('mail', $review->email)->notify((new ApprovedEmail($this->withLocale($language, fn () => $this->details($review))))->locale($language)));
     }
 
     public function replied(ReviewReplied $event): void
@@ -74,9 +79,11 @@ class Notifier
             return;
         }
 
-        $this->send(fn () => Notification::route('mail', $review->email)->notify(new RepliedEmail($this->details($review) + [
+        $language = $this->language($review);
+
+        $this->send(fn () => Notification::route('mail', $review->email)->notify((new RepliedEmail($this->withLocale($language, fn () => $this->details($review)) + [
             'reply' => $review->reply,
-        ])));
+        ]))->locale($language)));
     }
 
     protected function reachable(Review $review): bool
@@ -99,6 +106,15 @@ class Notifier
             'site' => (Site::get((string) $review->site) ?? Site::default())->name(),
             'first_name' => explode(' ', trim($review->name))[0] ?: null,
         ];
+    }
+
+    /**
+     * The language of the site a review was written on: emails to its
+     * reviewer are in it, whoever approved it or replied.
+     */
+    protected function language(Review $review): string
+    {
+        return (Site::get((string) $review->site) ?? Site::default())->lang();
     }
 
     protected function cpUrl(Review $review): ?string

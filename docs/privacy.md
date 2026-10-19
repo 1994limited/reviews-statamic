@@ -18,7 +18,7 @@ Export everything about one person's reviews as JSON:
 php please reviews:export someone@example.com --output=reviews.json
 ```
 
-Forget them: their name and email are taken off their reviews (shown as "A customer"), and they're sent no more review requests:
+Forget them: their name and email are taken off their reviews (shown as "A customer", in each visitor's language), and they're sent no more review requests:
 
 ```bash
 php please reviews:forget someone@example.com
