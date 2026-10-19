@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.3 (2026-10-19)
+
+### Fixed
+- With reCAPTCHA v3, the form still wrote a script inline, which a strict Content-Security-Policy blocks: it's now in `/!/reviews/reviews.js` with the time check. Needs `1994/reviews-core` 1.0.1, installed with it.
+
 ## 1.2.2 (2026-10-19)
 
 ### Fixed

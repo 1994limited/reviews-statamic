@@ -12,6 +12,7 @@ use NineteenNinetyFour\Reviews\Captcha\Recaptcha;
 use NineteenNinetyFour\Reviews\Captcha\RecaptchaV3;
 use NineteenNinetyFour\Reviews\Captcha\Turnstile;
 use NineteenNinetyFour\Reviews\Contracts\Captcha;
+use NineteenNinetyFour\Reviews\Core\Assets;
 use NineteenNinetyFour\Reviews\Core\Captcha\Captchas;
 use NineteenNinetyFour\Reviews\Core\Spam\Links;
 use NineteenNinetyFour\Reviews\Core\Spam\TimeToken;
@@ -57,8 +58,9 @@ class Spam
     }
 
     /**
-     * Marks when the page was opened, for the time trap on cached pages. A
-     * file, not inline, so it runs under a strict Content-Security-Policy.
+     * What review forms need in the browser (the time check, and
+     * reCAPTCHA v3's token), from reviews-core: a file, not inline, so it
+     * runs under a strict Content-Security-Policy.
      */
     public function script(): string
     {
@@ -67,7 +69,7 @@ class Spam
 
     public static function scriptPath(): string
     {
-        return dirname(__DIR__).'/resources/frontend/reviews.js';
+        return Assets::scriptPath();
     }
 
     protected function timeToken(): TimeToken
@@ -149,7 +151,7 @@ class Spam
 
         // The addon's own drivers need both keys; without them, there's no captcha.
         if (Captchas::builtIn($driver)) {
-            $captcha = Captchas::make($driver, (string) ($config['site_key'] ?? ''), (string) ($config['secret_key'] ?? ''), new LaravelClient(10), $config);
+            $captcha = Captchas::make($driver, (string) ($config['site_key'] ?? ''), (string) ($config['secret_key'] ?? ''), new LaravelClient(10), ['inline_script' => false] + $config);
 
             return $captcha ? new CoreCaptcha($captcha) : null;
         }

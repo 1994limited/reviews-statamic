@@ -111,7 +111,10 @@ class CaptchaTest extends TestCase
         $html = $this->antlers('{{ reviews:form }}{{ /reviews:form }}', ['id' => 'book']);
         $this->assertStringContainsString('api.js?render=site-key', $html);
         $this->assertStringContainsString('name="g-recaptcha-response"', $html);
-        $this->assertStringContainsString('action:"review"', $html);
+        // Its script is in the file the form loads, not inline.
+        $this->assertStringContainsString('data-reviews-recaptcha="site-key"', $html);
+        $this->assertStringNotContainsString('grecaptcha.execute', $html);
+        $this->get('/!/reviews/reviews.js')->assertOk()->assertSee('grecaptcha.execute', false);
 
         $outcomes = [
             [['success' => true, 'score' => 0.9, 'action' => 'review'], true],

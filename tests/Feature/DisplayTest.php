@@ -357,8 +357,8 @@ class DisplayTest extends TestCase
 
         $this->assertStringContainsString('19 October 2026', $html);
         $this->assertMatchesRegularExpression('#<script src="[^"]+/!/reviews/reviews\.js\?v=[0-9a-f]{12}"></script>#', $html);
-        $this->assertStringNotContainsString('reviewsTimed', $html);
+        $this->assertStringNotContainsString('<script>', $html);
 
-        $this->get('/!/reviews/reviews.js')->assertOk()->assertHeader('Content-Type', 'text/javascript; charset=utf-8')->assertSee('reviewsTimed', false);
+        $this->get('/!/reviews/reviews.js')->assertOk()->assertHeader('Content-Type', 'text/javascript; charset=utf-8')->assertSee('data-reviews-opened', false);
     }
 }

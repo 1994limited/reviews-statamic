@@ -94,3 +94,7 @@ class FriendlyCaptcha implements Captcha
 ```
 
 Then set `REVIEWS_CAPTCHA` (or `spam.captcha.driver`) to its class name. It's made by Laravel's container, with `siteKey`, `secretKey` and `config` (the `spam.captcha` config) if its constructor asks for them.
+
+## Content-Security-Policy
+
+Reviews writes no inline scripts: the time trap, and reCAPTCHA v3's token, are in one file, `/!/reviews/reviews.js`, from your own site, so `script-src 'self'` allows them. A captcha also needs its provider's addresses allowed: `challenges.cloudflare.com` for Turnstile, `js.hcaptcha.com` and `hcaptcha.com` for hCaptcha, and `www.google.com` and `www.gstatic.com` for reCAPTCHA (each in `script-src` and `frame-src`).
